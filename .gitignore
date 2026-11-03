@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+# build output
+.next/
+out/
+dist/
+# secrets: never upload
+.env
+.env.*
+!.env.example
+# local logs and data
+logs/
+data/
+*.log
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+# Windows helper scripts and Render settings (contain local notes / secrets)
+*.bat
+render.env
+# private planning notes (Chinese)
+项目方案.md
+交接说明.md
+# next.js / typescript
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+coverage/

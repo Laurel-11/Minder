@@ -1,0 +1,22 @@
+# Render Blueprint: one free web service. Secrets are typed into Render's dashboard, never committed.
+services:
+  - type: web
+    name: chaperone
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/ping
+    envVars:
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_VAULT_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: NEXT_PUBLIC_AG_STUDIO_LICENSE_KEY
+        sync: false

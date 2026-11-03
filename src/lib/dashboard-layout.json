@@ -1,0 +1,178 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "widgets": {
+        "spent": {
+          "type": "value",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Money spent"
+            }
+          },
+          "dataMapping": {
+            "value": [
+              {
+                "id": "purchases.spent",
+                "aggregation": "sum"
+              }
+            ]
+          }
+        },
+        "safe": {
+          "type": "value",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Money kept safe"
+            }
+          },
+          "dataMapping": {
+            "value": [
+              {
+                "id": "purchases.keptSafe",
+                "aggregation": "sum"
+              }
+            ]
+          }
+        },
+        "checked": {
+          "type": "value",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Purchases checked"
+            }
+          },
+          "dataMapping": {
+            "value": [
+              {
+                "id": "purchases.purchaseId",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "byCategory": {
+          "type": "column-chart-grouped",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Spent by category"
+            }
+          },
+          "dataMapping": {
+            "categoryKey": [
+              {
+                "id": "items.category"
+              }
+            ],
+            "valueKey": [
+              {
+                "id": "items.spent",
+                "aggregation": "sum"
+              }
+            ]
+          }
+        },
+        "calls": {
+          "type": "donut-chart",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Chaperone's calls"
+            }
+          },
+          "dataMapping": {
+            "categoryKey": [
+              {
+                "id": "purchases.decision"
+              }
+            ],
+            "valueKey": [
+              {
+                "id": "purchases.purchaseId",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "log": {
+          "type": "grid",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Every purchase"
+            }
+          },
+          "dataMapping": {
+            "cols": [
+              {
+                "id": "purchases.date"
+              },
+              {
+                "id": "purchases.merchant"
+              },
+              {
+                "id": "purchases.request"
+              },
+              {
+                "id": "purchases.amount"
+              },
+              {
+                "id": "purchases.decision"
+              },
+              {
+                "id": "purchases.status"
+              },
+              {
+                "id": "purchases.reason"
+              }
+            ]
+          }
+        }
+      },
+      "widgetLayout": {
+        "spent": {
+          "xTrack": 0,
+          "yTrack": 0,
+          "xSpan": 8,
+          "ySpan": 7
+        },
+        "safe": {
+          "xTrack": 8,
+          "yTrack": 0,
+          "xSpan": 8,
+          "ySpan": 7
+        },
+        "checked": {
+          "xTrack": 16,
+          "yTrack": 0,
+          "xSpan": 8,
+          "ySpan": 7
+        },
+        "byCategory": {
+          "xTrack": 0,
+          "yTrack": 7,
+          "xSpan": 14,
+          "ySpan": 16
+        },
+        "calls": {
+          "xTrack": 14,
+          "yTrack": 7,
+          "xSpan": 10,
+          "ySpan": 16
+        },
+        "log": {
+          "xTrack": 0,
+          "yTrack": 23,
+          "xSpan": 24,
+          "ySpan": 22
+        }
+      }
+    }
+  ],
+  "selectedPageId": "page-1",
+  "version": "3.0.0"
+}
