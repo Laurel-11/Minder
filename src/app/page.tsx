@@ -23,7 +23,13 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const db = await readDb();
   const connect = (await searchParams).connect;
   const banner = typeof connect === "string" ? banners[connect] : undefined;
-  const waiting = db.purchases.filter((p) => p.status === "awaiting_owner").length;
+  const waitingList = db.purchases.filter((p) => p.status === "awaiting_owner");
+  const waiting = waitingList.length;
+  const weekAgo = demoNow(db).getTime() - 7 * 86_400_000;
+  const thisWeek = db.purchases.filter((p) => new Date(p.createdAt).getTime() >= weekAgo);
+  const sum = (list: Purchase[]) => list.reduce((s, p) => s + p.total, 0);
+  const spent = sum(thisWeek.filter((p) => p.status === "paid" || p.status === "approved_by_owner"));
+  const keptSafe = sum(thisWeek.filter((p) => p.status === "blocked" || p.status === "declined_by_owner"));
   const setupDone = Boolean(db.vault && db.policy);
 
   return (
@@ -34,10 +40,29 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
         <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
           Every purchase your AI agent tries to make, checked before the money moves.
         </h1>
-        {waiting > 0 && (
-          <p className="mt-3 text-hold">
-            {waiting === 1 ? "1 purchase is" : `${waiting} purchases are`} waiting for your decision.
-          </p>
+        {db.purchases.length > 0 && (
+          <dl className="mt-5 grid grid-cols-3 divide-x divide-line rounded-md border border-line bg-paper">
+            <div className="px-3 py-2.5 sm:px-4">
+              <dt className="text-xs text-muted">Spent this week</dt>
+              <dd className="text-lg font-semibold tabular-nums sm:text-xl">{usd(spent)}</dd>
+            </div>
+            <div className="px-3 py-2.5 sm:px-4">
+              <dt className="text-xs text-muted">Kept safe</dt>
+              <dd className="text-lg font-semibold tabular-nums text-approve sm:text-xl">{usd(keptSafe)}</dd>
+            </div>
+            <div className="px-3 py-2.5 sm:px-4">
+              <dt className="text-xs text-muted">Waiting for you</dt>
+              <dd className={`text-lg font-semibold sm:text-xl ${waiting ? "text-hold" : ""}`}>
+                {waiting ? (
+                  <Link href={`/purchases/${waitingList[0].id}`} className="underline decoration-2 underline-offset-4">
+                    {waiting === 1 ? "1 to sign" : `${waiting} to sign`}
+                  </Link>
+                ) : (
+                  "Nothing"
+                )}
+              </dd>
+            </div>
+          </dl>
         )}
       </section>
 

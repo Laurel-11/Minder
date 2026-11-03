@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { DashboardClient } from "@/components/DashboardClient";
+import { demoNow } from "@/lib/clock";
 import { buildDashboardRows } from "@/lib/dashboard-data";
 import { readDb } from "@/lib/db";
 
@@ -16,17 +17,18 @@ async function loadLayout(): Promise<unknown> {
 
 export default async function DashboardPage() {
   const [db, initialState] = await Promise.all([readDb(), loadLayout()]);
-  const rows = buildDashboardRows(db.purchases);
+  const rows = buildDashboardRows(db.purchases, { policy: db.policy, now: demoNow(db) });
   return (
-    <div className="flex flex-col gap-4">
+    <div className="relative left-1/2 flex w-[min(1180px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-5">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-2 max-w-prose text-muted">
-          Everything your agent tried to buy, in one place. Choose Customize with AI to ask for a new chart in plain words.
+          Maya&apos;s spending statement: everything ShopBot tried to buy, and what Chaperone did about it. Built with AG Studio, so you can ask for a new chart in
+          plain words.
         </p>
       </div>
-      <div className="relative left-1/2 h-[78vh] min-h-[620px] w-[min(1280px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-lg border border-line bg-paper">
-        <DashboardClient purchases={rows.purchases} items={rows.items} decisions={rows.decisions} initialState={initialState} />
+      <div>
+        <DashboardClient purchases={rows.purchases} items={rows.items} decisions={rows.decisions} budget={rows.budget} initialState={initialState} />
       </div>
     </div>
   );

@@ -5,6 +5,8 @@
 @font-face { font-family: "Plex"; src: url("/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
 @font-face { font-family: "Plex"; src: url("/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
 @font-face { font-family: "Plex Condensed"; src: url("/fonts/ibm-plex-sans-condensed-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+/* Mrs Saint Delafield (SIL Open Font License, see /public/fonts/OFL-Mrs-Saint-Delafield.txt): only for signatures on the slips. */
+@font-face { font-family: "Signature"; src: url("/fonts/mrs-saint-delafield-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 
 @theme {
   --color-canvas: #e9edf1;
@@ -20,6 +22,7 @@
   --color-block-soft: #f9e3e1;
   --font-sans: "Plex", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-stamp: "Plex Condensed", "Plex", "Arial Narrow", sans-serif;
+  --font-signature: "Signature", "Brush Script MT", cursive;
 }
 
 :root {
@@ -48,6 +51,20 @@ body {
     linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear)) no-repeat;
 }
 
+/* Security-print band, like the fine wavy lines on a cheque. Decoration only. */
+.guilloche {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='12'%3E%3Cg fill='none' stroke-width='.75'%3E%3Cpath stroke='%23b4bfcd' d='M0 6C6 0 6 0 12 6S18 12 24 6 30 0 36 6 42 12 48 6'/%3E%3Cpath stroke='%23b4bfcd' d='M0 6C6 12 6 12 12 6S18 0 24 6 30 12 36 6 42 0 48 6'/%3E%3Cpath stroke='%23d3dbe5' d='M0 6C6 3 6 3 12 6S18 9 24 6 30 3 36 6 42 9 48 6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 48px 12px;
+  background-repeat: repeat-x;
+  background-position: left center;
+}
+.guilloche-dark {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='12'%3E%3Cg fill='none' stroke-width='.8'%3E%3Cpath stroke='%23404d68' d='M0 6C6 0 6 0 12 6S18 12 24 6 30 0 36 6 42 12 48 6'/%3E%3Cpath stroke='%23404d68' d='M0 6C6 12 6 12 12 6S18 0 24 6 30 12 36 6 42 0 48 6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 48px 12px;
+  background-repeat: repeat-x;
+  background-position: left center;
+}
+
 /* The verdict stamp: the one loud element on the page. */
 .stamp {
   font-family: var(--font-stamp);
@@ -59,6 +76,7 @@ body {
   transform: rotate(-4deg);
   display: inline-block;
   line-height: 1.2;
+  white-space: nowrap;
 }
 @media (prefers-reduced-motion: no-preference) {
   .stamp-in {
@@ -69,3 +87,4 @@ body {
     to { transform: rotate(-4deg) scale(1); opacity: 1; }
   }
 }
+

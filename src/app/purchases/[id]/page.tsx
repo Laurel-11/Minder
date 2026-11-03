@@ -30,7 +30,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
         <h1 className="text-2xl font-semibold tracking-tight">{p.status === "awaiting_owner" ? "Your agent wants to pay" : "Purchase details"}</h1>
         {p.status === "awaiting_owner" && <p className="mt-1 text-muted">Nothing is charged until you decide.</p>}
       </div>
-      <PurchaseSlip purchase={p} />
+      <PurchaseSlip purchase={p} detailed />
 
       {p.status === "awaiting_owner" && <DecisionButtons purchaseId={p.id} total={usd(p.total)} />}
 

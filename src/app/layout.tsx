@@ -23,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <NavLinks />
           </div>
+          <div aria-hidden className="guilloche-dark h-3" />
         </header>
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">{children}</main>
         <footer className="py-6 text-center text-xs text-muted">Sandbox demo. No real money moves.</footer>

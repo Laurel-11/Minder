@@ -9,6 +9,17 @@
             "title": {
               "enabled": true,
               "text": "Money spent"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "Paid through PayPal"
+            },
+            "style": {
+              "typography": {
+                "fontSize": 30,
+                "fontWeight": 600
+              },
+              "verticalAlign": "bottom"
             }
           },
           "dataMapping": {
@@ -25,7 +36,19 @@
           "format": {
             "title": {
               "enabled": true,
-              "text": "Money kept safe"
+              "text": "Kept safe"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "Blocked or declined, never paid"
+            },
+            "style": {
+              "typography": {
+                "fontSize": 30,
+                "fontWeight": 600
+              },
+              "color": "#1d7a4e",
+              "verticalAlign": "bottom"
             }
           },
           "dataMapping": {
@@ -43,6 +66,17 @@
             "title": {
               "enabled": true,
               "text": "Purchases checked"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "Every time ShopBot asked to pay"
+            },
+            "style": {
+              "typography": {
+                "fontSize": 30,
+                "fontWeight": 600
+              },
+              "verticalAlign": "bottom"
             }
           },
           "dataMapping": {
@@ -54,23 +88,39 @@
             ]
           }
         },
-        "byCategory": {
-          "type": "column-chart-grouped",
+        "budget": {
+          "type": "linear-gauge",
           "format": {
             "title": {
               "enabled": true,
-              "text": "Spent by category"
+              "text": "Food budget used"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "Your rule: $60 a week"
+            },
+            "style": {
+              "direction": "horizontal",
+              "thickness": 22,
+              "label": {
+                "placement": "inside-end",
+                "color": "#1b2333",
+                "typography": {
+                  "fontSize": 13,
+                  "fontWeight": 600
+                }
+              },
+              "scaleLabel": {
+                "enabled": false,
+                "min": 0,
+                "max": 60
+              }
             }
           },
           "dataMapping": {
-            "categoryKey": [
+            "value": [
               {
-                "id": "items.category"
-              }
-            ],
-            "valueKey": [
-              {
-                "id": "items.spent",
+                "id": "budgets.used",
                 "aggregation": "sum"
               }
             ]
@@ -82,6 +132,10 @@
             "title": {
               "enabled": true,
               "text": "Chaperone's calls"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "Paid, asked you, or blocked"
             }
           },
           "dataMapping": {
@@ -98,12 +152,54 @@
             ]
           }
         },
+        "byStore": {
+          "type": "bar-chart-grouped",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Where the money went"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "Money paid, by store"
+            }
+          },
+          "dataMapping": {
+            "categoryKey": [
+              {
+                "id": "purchases.merchant"
+              }
+            ],
+            "valueKey": [
+              {
+                "id": "purchases.spent",
+                "aggregation": "sum"
+              }
+            ]
+          },
+          "sort": [
+            {
+              "field": {
+                "id": "purchases.spent",
+                "aggregation": "sum"
+              },
+              "direction": "desc"
+            }
+          ]
+        },
         "log": {
           "type": "grid",
           "format": {
             "title": {
               "enabled": true,
               "text": "Every purchase"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "Newest first"
+            },
+            "style": {
+              "columnAutoSize": true
             }
           },
           "dataMapping": {
@@ -124,9 +220,6 @@
                 "id": "purchases.decision"
               },
               {
-                "id": "purchases.status"
-              },
-              {
                 "id": "purchases.reason"
               }
             ]
@@ -137,38 +230,44 @@
         "spent": {
           "xTrack": 0,
           "yTrack": 0,
-          "xSpan": 8,
-          "ySpan": 7
+          "xSpan": 6,
+          "ySpan": 6
         },
         "safe": {
-          "xTrack": 8,
+          "xTrack": 6,
           "yTrack": 0,
-          "xSpan": 8,
-          "ySpan": 7
+          "xSpan": 6,
+          "ySpan": 6
         },
         "checked": {
-          "xTrack": 16,
+          "xTrack": 12,
           "yTrack": 0,
-          "xSpan": 8,
-          "ySpan": 7
+          "xSpan": 6,
+          "ySpan": 6
         },
-        "byCategory": {
-          "xTrack": 0,
-          "yTrack": 7,
-          "xSpan": 14,
-          "ySpan": 16
+        "budget": {
+          "xTrack": 18,
+          "yTrack": 0,
+          "xSpan": 6,
+          "ySpan": 6
         },
         "calls": {
-          "xTrack": 14,
-          "yTrack": 7,
-          "xSpan": 10,
-          "ySpan": 16
+          "xTrack": 0,
+          "yTrack": 6,
+          "xSpan": 9,
+          "ySpan": 14
+        },
+        "byStore": {
+          "xTrack": 9,
+          "yTrack": 6,
+          "xSpan": 15,
+          "ySpan": 14
         },
         "log": {
           "xTrack": 0,
-          "yTrack": 23,
+          "yTrack": 20,
           "xSpan": 24,
-          "ySpan": 22
+          "ySpan": 21
         }
       }
     }
