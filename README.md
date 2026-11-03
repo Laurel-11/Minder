@@ -2,7 +2,7 @@
 
 **A PayPal-powered bodyguard for your AI shopping agent.** Chaperone checks every purchase before the money moves, and gets your money back when something goes wrong.
 
-- Live demo: _link added after deployment_
+- Live demo: https://chaperone-kqxt.onrender.com (free plan: the first visit after a quiet spell can take up to a minute to wake up)
 - Video: _link added after recording_
 
 Built for the PayPal AI Hackathon (Agentic Commerce). Sandbox only: no real money moves.
