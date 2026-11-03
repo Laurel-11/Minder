@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usd } from "@/lib/money";
 import type { ShopBotRun } from "@/lib/shopbot";
 import { VerdictStamp } from "./VerdictStamp";
@@ -16,7 +16,11 @@ const PROGRESS = ["Reading the demo stores", "Choosing products", "Asking Chaper
 
 type Turn = { request: string; run?: ShopBotRun; error?: string };
 
+const noSubscribe = () => () => {};
+
 export function ShopBotChat() {
+  // False in the server HTML, true once React is running in the browser: until then a tap would do nothing.
+  const ready = useSyncExternalStore(noSubscribe, () => true, () => false);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -69,7 +73,7 @@ export function ShopBotChat() {
             <p className="text-sm text-muted">Tell ShopBot what to buy, or try one of these:</p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => send(s)} className="rounded-full border border-line px-3 py-1.5 text-left text-sm hover:border-ink">
+                <button key={s} onClick={() => send(s)} disabled={!ready} className="rounded-full border border-line px-3 py-1.5 text-left text-sm hover:border-ink disabled:opacity-50">
                   {s}
                 </button>
               ))}
@@ -103,8 +107,8 @@ export function ShopBotChat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask ShopBot to buy something"
-          disabled={busy}
-          className="flex-1 rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-ink"
+          disabled={busy || !ready}
+          className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-ink"
         />
         <button type="submit" disabled={busy || input.trim().length < 3} className="rounded-lg bg-[#5b4bc4] px-4 py-2 text-sm font-medium text-paper disabled:opacity-50">
           Send

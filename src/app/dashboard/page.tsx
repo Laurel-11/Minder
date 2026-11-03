@@ -22,11 +22,11 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-2 max-w-prose text-muted">
-          Everything your agent tried to buy, in one place. Ask the AI on the right for a new chart in plain words.
+          Everything your agent tried to buy, in one place. Choose Customize with AI to ask for a new chart in plain words.
         </p>
       </div>
       <div className="relative left-1/2 h-[78vh] min-h-[620px] w-[min(1280px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-lg border border-line bg-paper">
-        <DashboardClient purchases={rows.purchases} items={rows.items} initialState={initialState} />
+        <DashboardClient purchases={rows.purchases} items={rows.items} decisions={rows.decisions} initialState={initialState} />
       </div>
     </div>
   );

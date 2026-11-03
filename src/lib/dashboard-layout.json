@@ -87,13 +87,13 @@
           "dataMapping": {
             "categoryKey": [
               {
-                "id": "purchases.decision"
+                "id": "decisions.decision"
               }
             ],
             "valueKey": [
               {
-                "id": "purchases.purchaseId",
-                "aggregation": "count"
+                "id": "decisions.purchases",
+                "aggregation": "sum"
               }
             ]
           }

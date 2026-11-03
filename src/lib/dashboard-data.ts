@@ -30,6 +30,9 @@ export type PurchaseRow = {
   reason: string;
 };
 
+/** One row per verdict, always in this order, so chart colours stay green / amber / red. */
+export type DecisionRow = { decision: string; purchases: number; amount: number };
+
 export type ItemRow = {
   purchaseId: string;
   date: string;
@@ -41,7 +44,7 @@ export type ItemRow = {
   spent: number;
 };
 
-export function buildDashboardRows(purchases: Purchase[]): { purchases: PurchaseRow[]; items: ItemRow[] } {
+export function buildDashboardRows(purchases: Purchase[]): { purchases: PurchaseRow[]; items: ItemRow[]; decisions: DecisionRow[] } {
   const rows: PurchaseRow[] = purchases.map((p) => ({
     purchaseId: p.id,
     date: p.createdAt,
@@ -70,5 +73,9 @@ export function buildDashboardRows(purchases: Purchase[]): { purchases: Purchase
       spent: moneyMoved(p.status) ? i.unitPrice * i.quantity : 0,
     })),
   );
-  return { purchases: rows, items };
+  const decisions: DecisionRow[] = (["approve", "hold", "block"] as Outcome[]).map((d) => {
+    const these = purchases.filter((p) => p.decision === d);
+    return { decision: DECISION_LABEL[d], purchases: these.length, amount: these.reduce((s, p) => s + p.total, 0) };
+  });
+  return { purchases: rows, items, decisions };
 }
