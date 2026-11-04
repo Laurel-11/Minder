@@ -28,7 +28,7 @@ export async function GET() {
     paypal,
     ai,
     vault: db.vault
-      ? { ok: true, detail: `Maya's PayPal is connected (saved ${new Date(db.vault.savedAt).toLocaleString("en-US")})` }
+      ? { ok: true, detail: `Maya's PayPal is connected (saved ${new Date(db.vault.savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" })})` }
       : { ok: false, detail: "Maya has not connected PayPal yet" },
   });
 }

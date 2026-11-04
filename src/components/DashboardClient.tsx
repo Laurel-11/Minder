@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { BudgetRow, DecisionRow, ItemRow, PurchaseRow } from "@/lib/dashboard-data";
+import type { DashboardRows } from "@/lib/dashboard-data";
 
 // AG Studio only runs in the browser.
 const SpendDashboard = dynamic(() => import("./SpendDashboard"), {
@@ -9,6 +9,6 @@ const SpendDashboard = dynamic(() => import("./SpendDashboard"), {
   loading: () => <p className="p-6 text-muted">Loading the dashboard…</p>,
 });
 
-export function DashboardClient(props: { purchases: PurchaseRow[]; items: ItemRow[]; decisions: DecisionRow[]; budget: BudgetRow[]; initialState?: unknown }) {
+export function DashboardClient(props: { rows: DashboardRows; initialState?: unknown }) {
   return <SpendDashboard {...props} />;
 }

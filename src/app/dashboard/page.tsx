@@ -17,7 +17,7 @@ async function loadLayout(): Promise<unknown> {
 
 export default async function DashboardPage() {
   const [db, initialState] = await Promise.all([readDb(), loadLayout()]);
-  const rows = buildDashboardRows(db.purchases, { policy: db.policy, now: demoNow(db) });
+  const rows = buildDashboardRows(db.purchases, { policy: db.policy, now: demoNow(db), cases: db.cases });
   return (
     <div className="relative left-1/2 flex w-[min(1180px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-5">
       <div>
@@ -28,7 +28,7 @@ export default async function DashboardPage() {
         </p>
       </div>
       <div>
-        <DashboardClient purchases={rows.purchases} items={rows.items} decisions={rows.decisions} budget={rows.budget} initialState={initialState} />
+        <DashboardClient rows={rows} initialState={initialState} />
       </div>
     </div>
   );

@@ -1,215 +1,156 @@
 "use client";
 
-import { AgStudioAiModule, AgStudioLicenseManager, createAiHarness, studioTheme, type AgFieldDefinition, type AgStudioApi } from "ag-studio";
-import { AgStudio } from "ag-studio-react";
+import { AgStudioAiModule, createAiHarness, type AgReportState, type AgStudioApi } from "ag-studio";
+import { AgStudio, AgStudioProvider } from "ag-studio-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { BudgetRow, DecisionRow, ItemRow, PurchaseRow } from "@/lib/dashboard-data";
-import { geminiAdapter } from "@/lib/studio-adapter";
+import type { BudgetRow, DashboardRows } from "@/lib/dashboard-data";
+import { CHEQUE_EVENT, chaperoneHarness } from "./studio/agents";
+import { buildStudioData } from "./studio/data";
+import { desktopTheme, phoneTheme } from "./studio/theme";
+import { ApprovalCheque, Cheque, PayPalCheckCard, PurchaseFoundCard, WhatIfCard } from "./studio/ToolCards";
+import type { PurchaseRecord } from "@/lib/studio-tools";
+import { chaperoneWidgets, MONEY_FLOW, STORE_TRICKS } from "./studio/widgets";
 
 const licenseKey = process.env.NEXT_PUBLIC_AG_STUDIO_LICENSE_KEY;
-if (licenseKey) AgStudioLicenseManager.setLicenseKey(licenseKey);
 
-// Chaperone's palette and type, so the dashboard reads as part of the product.
-const themeParams = {
-  fontFamily: "Plex, 'Segoe UI', system-ui, sans-serif",
-  studioCanvasFontFamily: "Plex, 'Segoe UI', system-ui, sans-serif",
-  foregroundColor: "#1b2333",
-  textColor: "#1b2333",
-  accentColor: "#1b2333",
-  backgroundColor: "#ffffff",
-  borderColor: "#d3d9e0",
-  // The canvas is the page itself: no frame, no shadow, widgets sit on it like slips.
-  studioCanvasBackgroundColor: "#e9edf1",
-  studioWrapperBackgroundColor: "#e9edf1",
-  studioWrapperBorder: false,
-  studioCanvasBorder: false,
-  studioCanvasShadow: "none",
-  studioCanvasPadding: 0,
-  studioWrapperSpacing: 0,
-  studioCanvasRowHeight: 20,
-  studioWidgetBackgroundColor: "#ffffff",
-  studioWidgetBorder: "1px solid #d3d9e0",
-  studioWidgetBorderRadius: 6,
-  studioWidgetPadding: 16,
-  studioWidgetTitleFontFamily: "Plex, 'Segoe UI', system-ui, sans-serif",
-  studioWidgetTitleFontSize: 15,
-  studioWidgetTitleFontWeight: 600,
-  studioWidgetTitleTextColor: "#1b2333",
-  studioWidgetSubtitleFontSize: 13,
-  studioWidgetSubtitleFontWeight: 400,
-  studioWidgetSubtitleTextColor: "#5b6475",
-  studioValueWidgetFontSize: 30,
-  chartFontFamily: "Plex, 'Segoe UI', system-ui, sans-serif",
-  chartTextColor: "#1b2333",
-  chartSubtleTextColor: "#5b6475",
-  chartGridLineColor: "#e6eaef",
-  chartAxisLineColor: "#d3d9e0",
-  gridFontFamily: "Plex, 'Segoe UI', system-ui, sans-serif",
-  gridFontSize: 13,
-  gridHeaderBackgroundColor: "#f4f6f8",
-  gridHeaderTextColor: "#5b6475",
-  gridHeaderFontWeight: 600,
-  gridOddRowBackgroundColor: "#fbfcfd",
-  gridRowBorder: "1px solid #eceff3",
-  gridColumnBorder: false,
-  gridWrapperBorder: false,
-  gridRowHeight: 38,
-  gridCellHorizontalPadding: 10,
-  // Chaperone's verdict colours first (the "decisions" table always lists Approved, Asked you, Blocked in that order), then quiet neutrals.
-  chartPaletteFills1Color: "#1d7a4e",
-  chartPaletteFills2Color: "#a9620a",
-  chartPaletteFills3Color: "#c0352b",
-  chartPaletteFills4Color: "#5b6475",
-  chartPaletteFills5Color: "#8a94a6",
-  chartPaletteStrokes1Color: "#1d7a4e",
-  chartPaletteStrokes2Color: "#a9620a",
-  chartPaletteStrokes3Color: "#c0352b",
-  chartPaletteStrokes4Color: "#5b6475",
-  chartPaletteStrokes5Color: "#8a94a6",
-  studioPanelWidth: 230,
+type Track = { xTrack: number; yTrack: number; xSpan: number; ySpan: number };
+type PageLayout = { id: string; widgets?: Record<string, { type?: string; format?: Record<string, unknown> }>; widgetLayout?: Record<string, Track> };
+type Layout = { pages?: PageLayout[]; selectedPageId?: string };
+
+// The report's pages, as the owner would name them. Pages the AI adds get a plain number.
+const PAGE_TITLES: Record<string, string> = { "page-1": "Overview", tricks: "Tricks caught", recovery: "Recovery" };
+
+// On a phone every widget gets the full width, stacked in reading order, at a height that suits its type.
+const PHONE_HEIGHT: Record<string, number> = {
+  value: 6,
+  "linear-gauge": 6,
+  "donut-chart": 15,
+  "bar-chart-grouped": 14,
+  grid: 22,
+  [MONEY_FLOW]: 24,
+  [STORE_TRICKS]: 30,
 };
-const desktopTheme = studioTheme.withParams({ ...themeParams, studioCanvasMinWidth: 560 });
-const phoneTheme = studioTheme.withParams({ ...themeParams, studioCanvasMinWidth: 280, studioMinWidth: 280 });
-
-type Layout = { pages?: { widgets?: Record<string, unknown>; widgetLayout?: Record<string, { xTrack: number; yTrack: number; xSpan: number; ySpan: number }> }[] };
-
-// On a phone every widget gets the full width, stacked in reading order: the numbers, the verdicts, then the detail.
-const PHONE_STACK: [string, number][] = [["spent", 6], ["safe", 6], ["checked", 6], ["budget", 6], ["calls", 15], ["byStore", 14], ["log", 22]];
 function phoneLayout(state: unknown): unknown {
   const copy = structuredClone(state) as Layout;
-  const page = copy?.pages?.[0];
-  if (!page?.widgetLayout || !page.widgets) return state;
-  const stacked: NonNullable<typeof page.widgetLayout> = {};
-  let y = 0;
-  for (const [id, height] of PHONE_STACK) {
-    if (!page.widgets[id]) continue;
-    stacked[id] = { xTrack: 0, yTrack: y, xSpan: 24, ySpan: height };
-    y += height;
+  for (const page of copy?.pages ?? []) {
+    if (!page.widgetLayout || !page.widgets) continue;
+    const order = Object.entries(page.widgetLayout).sort(([, a], [, b]) => a.yTrack - b.yTrack || a.xTrack - b.xTrack);
+    const stacked: Record<string, Track> = {};
+    let y = 0;
+    for (const [id, l] of order) {
+      const h = PHONE_HEIGHT[page.widgets[id]?.type ?? ""] ?? l.ySpan;
+      stacked[id] = { xTrack: 0, yTrack: y, xSpan: 24, ySpan: h };
+      y += h;
+    }
+    page.widgetLayout = stacked;
   }
-  for (const [id, l] of Object.entries(page.widgetLayout)) {
-    if (stacked[id]) continue;
-    stacked[id] = { xTrack: 0, yTrack: y, xSpan: 24, ySpan: l.ySpan };
-    y += l.ySpan;
-  }
-  page.widgetLayout = stacked;
   return copy;
 }
 
 /** Point the budget gauge at the owner's real limit (the saved layout says $60). */
 function withBudget(state: unknown, budget?: BudgetRow): unknown {
-  const copy = structuredClone(state) as Layout & { pages?: { widgets?: Record<string, { format?: { subtitle?: { text?: string }; style?: { scaleLabel?: { max?: number } } } }> }[] };
-  const gauge = copy?.pages?.[0]?.widgets?.budget;
+  const copy = structuredClone(state) as Layout;
+  const gauge = copy?.pages?.flatMap((p) => Object.values(p.widgets ?? {})).find((w) => w.type === "linear-gauge") as
+    | { format?: { subtitle?: { text?: string }; style?: { scaleLabel?: { max?: number } } } }
+    | undefined;
   if (!gauge || !budget) return state;
   if (gauge.format?.style?.scaleLabel) gauge.format.style.scaleLabel.max = budget.cap;
   if (gauge.format?.subtitle) gauge.format.subtitle.text = `Your rule: $${budget.cap} a ${budget.per}`;
   return copy;
 }
 
-const budgetFields: AgFieldDefinition[] = [
-  { id: "budgetName", name: "Budget", format: "textFormat" },
-  { id: "used", name: "Used", format: "currencyFormat", formatOptions: { format: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }) } },
-  { id: "cap", name: "Budget amount", format: "currencyFormat", formatOptions: { format: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }) } },
-  { id: "remaining", name: "Left", format: "currencyFormat", formatOptions: { format: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }) } },
-  { id: "per", name: "Period", format: "textFormat" },
-];
-
-const decisionFields: AgFieldDefinition[] = [
-  { id: "decision", name: "Chaperone's call", format: "textFormat" },
-  { id: "purchases", name: "Purchases", format: "integerFormat" },
-  { id: "amount", name: "Amount", format: "currencyFormat", formatOptions: { format: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }) } },
-];
-
 const modules = [AgStudioAiModule];
 const panels = { edit: { left: [], right: ["ai", "edit", "data"] as ("ai" | "edit" | "data")[] } };
 
-const money = { format: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }) };
-// "Nov 3, 1:42 PM": short enough for the grid's date column.
-const when = { format: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) };
+// How our agents' tool calls read in the chat panel. The wording describes the work; the cards show the result.
+const aiToolDisplay = {
+  look_up_purchase: {
+    label: ({ args }: { args: { query?: string } }) => ({ text: `Looked up ${args.query ? `"${args.query}"` : "a purchase"} in Chaperone's log` }),
+    detail: PurchaseFoundCard,
+  },
+  verify_with_paypal: {
+    label: ({ result }: { result?: { success: boolean; data?: unknown } }) => {
+      const v = result?.success ? (result.data as { allMatch?: boolean; checks?: unknown[] } | undefined) : undefined;
+      return { text: "Checked PayPal's own records", pill: v ? (v.allMatch ? "Matches" : "Mismatch") : undefined };
+    },
+    detail: PayPalCheckCard,
+  },
+  prepare_approval: { label: () => ({ text: "Prepared a cheque for you to sign" }), detail: ApprovalCheque },
+  simulate_rules: {
+    label: ({ result }: { result?: { success: boolean; data?: unknown } }) => {
+      const w = result?.success ? (result.data as { changedCount?: number } | undefined) : undefined;
+      return { text: "Replayed past purchases under the new rules", pill: w ? `${w.changedCount} changed` : undefined };
+    },
+    detail: WhatIfCard,
+  },
+};
 
-const purchaseFields: AgFieldDefinition[] = [
-  { id: "date", name: "Date", format: "dateTimeFormat", formatOptions: when },
-  { id: "merchant", name: "Store", format: "textFormat" },
-  { id: "agent", name: "Agent", format: "textFormat" },
-  { id: "request", name: "What you asked for", format: "textFormat" },
-  { id: "items", name: "Items", format: "textFormat" },
-  { id: "amount", name: "Order total", format: "currencyFormat", formatOptions: money },
-  { id: "decision", name: "Chaperone's call", format: "textFormat" },
-  { id: "status", name: "Status", format: "textFormat" },
-  { id: "spent", name: "Money spent", format: "currencyFormat", formatOptions: money },
-  { id: "keptSafe", name: "Money kept safe", format: "currencyFormat", formatOptions: money },
-  { id: "aiVerdict", name: "AI review", format: "textFormat" },
-  { id: "manipulation", name: "Manipulation", format: "textFormat" },
-  { id: "reason", name: "Reason", format: "textFormat" },
-  { id: "purchaseId", name: "Purchase ID", format: "textFormat", hide: true },
-];
-
-const itemFields: AgFieldDefinition[] = [
-  { id: "date", name: "Date", format: "dateTimeFormat" },
-  { id: "merchant", name: "Store", format: "textFormat" },
-  { id: "item", name: "Item", format: "textFormat" },
-  { id: "category", name: "Category", format: "textFormat" },
-  { id: "amount", name: "Amount", format: "currencyFormat", formatOptions: money },
-  { id: "status", name: "Status", format: "textFormat" },
-  { id: "spent", name: "Money spent", format: "currencyFormat", formatOptions: money },
-  { id: "purchaseId", name: "Purchase ID", format: "textFormat", hide: true },
-];
-
-const promptStarters = [
-  { label: "Food this week", prompt: "Add a chart of how much my agent spent on groceries and food delivery, by day, for the last 7 days." },
-  { label: "What got blocked", prompt: "Show me every purchase Chaperone blocked, with the store, amount and reason." },
-  { label: "Money kept safe", prompt: "Add a big number showing the total money Chaperone kept safe, next to the total money spent." },
-];
-
-export default function SpendDashboard({
-  purchases,
-  items,
-  decisions,
-  budget,
-  initialState,
-}: {
-  purchases: PurchaseRow[];
-  items: ItemRow[];
-  decisions: DecisionRow[];
-  budget: BudgetRow[];
-  initialState?: unknown;
-}) {
+export default function SpendDashboard({ rows, initialState }: { rows: DashboardRows; initialState?: unknown }) {
   // This component only runs in the browser, so the screen width is known on the first render.
   const [phone] = useState(() => window.matchMedia("(max-width: 639px)").matches);
   const layout = useMemo(() => {
     if (!initialState) return initialState;
-    const fitted = withBudget(initialState, budget[0]);
+    const fitted = withBudget(initialState, rows.budget[0]);
     return phone ? phoneLayout(fitted) : fitted;
-  }, [phone, initialState, budget]);
+  }, [phone, initialState, rows.budget]);
   const period = useMemo(() => {
-    const dates = purchases.map((p) => new Date(p.date).getTime()).sort((a, b) => a - b);
+    const dates = rows.purchases.map((p) => new Date(p.date).getTime()).sort((a, b) => a - b);
     if (!dates.length) return "";
     const day = (t: number) => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return dates.length > 1 && day(dates[0]) !== day(dates.at(-1)!) ? `${day(dates[0])} to ${day(dates.at(-1)!)}` : day(dates[0]);
-  }, [purchases]);
+  }, [rows.purchases]);
 
-  const data = useMemo(
-    () => ({
-      sources: [
-        { id: "purchases", name: "Purchases", description: "One row per purchase your AI agent tried to make, with Chaperone's decision.", fields: purchaseFields, data: purchases.map((p) => ({ ...p, date: new Date(p.date) })) },
-        { id: "items", name: "Items", description: "One row per item in those purchases.", fields: itemFields, data: items.map((i) => ({ ...i, date: new Date(i.date) })) },
-        { id: "decisions", name: "Chaperone's calls", description: "How many purchases Chaperone approved, asked the owner about, or blocked.", fields: decisionFields, data: decisions },
-        { id: "budgets", name: "Budget", description: "The owner's spending budget from their rules, and how much of it is used this period.", fields: budgetFields, data: budget },
-      ],
-    }),
-    [purchases, items, decisions, budget],
-  );
+  const data = useMemo(() => buildStudioData(rows), [rows]);
+  const api = useRef<AgStudioApi | null>(null);
 
   // Owners see a clean dashboard; "Customize" opens the editor and the AI assistant.
   const [mode, setMode] = useState<"view" | "edit">("view");
+  // The first time the editor opens, fold the Compose and Data panels so the report keeps room next
+  // to the AI assistant. (Studio builds its panels on entering edit mode, so this cannot live in the saved layout.)
+  const tidied = useRef(false);
+  useEffect(() => {
+    if (mode !== "edit" || tidied.current) return;
+    const timer = setTimeout(() => {
+      const studio = api.current;
+      if (!studio) return;
+      tidied.current = true;
+      studio.setState({ ...studio.getState(), panels: { edit: { collapsed: true }, data: { collapsed: true } } });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [mode]);
 
-  // AG Studio scrolls inside a fixed height. Measure what the widgets need and grow to fit,
-  // so the dashboard reads like the rest of the page. Widgets the AI adds make it grow too.
+  // Which page is showing. Studio owns the state; we mirror it so our tabs stay in step with
+  // pages the AI adds or switches to.
+  const [pages, setPages] = useState<string[]>(() => ((initialState as Layout)?.pages ?? []).map((p) => p.id));
+  const [pageId, setPageId] = useState<string>(() => (initialState as Layout)?.selectedPageId ?? "page-1");
+  const showPage = (id: string) => {
+    const studio = api.current;
+    if (!studio || id === pageId) return;
+    studio.setState({ ...studio.getState(), selectedPageId: id });
+    setPageId(id);
+    setContentHeight(null);
+  };
+  const counts: Record<string, string> = {
+    tricks: rows.tricks.length ? String(rows.tricks.length) : "",
+    recovery: rows.cases.length ? String(rows.cases.length) : "",
+  };
+
+  // A cheque the auditor agent prepared: shown above the report until the owner signs, declines or closes it.
+  const [cheque, setCheque] = useState<PurchaseRecord | null>(null);
+  useEffect(() => {
+    const show = (e: Event) => setCheque((e as CustomEvent<PurchaseRecord>).detail);
+    window.addEventListener(CHEQUE_EVENT, show);
+    return () => window.removeEventListener(CHEQUE_EVENT, show);
+  }, []);
+
+  // AG Studio scrolls inside a fixed height. Measure what the widgets need and grow to fit, so the
+  // dashboard reads like the rest of the page. Widgets the AI adds make it grow too.
   const box = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   useEffect(() => {
     const measure = () => {
-      const layout = box.current?.querySelector<HTMLElement>(".ag-studio-layout");
-      if (layout) setContentHeight((h) => (h === null || layout.scrollHeight > h + 4 ? layout.scrollHeight : h));
+      const el = box.current?.querySelector<HTMLElement>(".ag-studio-layout");
+      if (el) setContentHeight((h) => (h === null || el.scrollHeight > h + 4 ? el.scrollHeight : h));
     };
     const timer = setInterval(measure, 400);
     return () => clearInterval(timer);
@@ -232,22 +173,61 @@ export default function SpendDashboard({
           </button>
         )}
       </div>
+      {pages.length > 1 && (
+        <div role="tablist" aria-label="Dashboard pages" className="mb-4 flex flex-wrap gap-x-6 border-b border-line">
+          {pages.map((id, i) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={id === pageId}
+              onClick={() => showPage(id)}
+              className="-mb-px flex items-baseline gap-1.5 border-b-2 border-transparent px-0.5 pb-2 text-[15px] text-muted hover:text-ink aria-selected:border-ink aria-selected:font-semibold aria-selected:text-ink"
+            >
+              {PAGE_TITLES[id] ?? `Page ${i + 1}`}
+              {counts[id] && <span className="text-[13px] font-normal text-muted tabular-nums">{counts[id]}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      {cheque && (
+        <section aria-label="Waiting for your signature" className="mb-4 flex flex-col gap-2 rounded-lg border border-hold bg-hold-soft p-3 sm:max-w-md">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-[15px] font-semibold">ShopBot wants to pay. Nothing moves until you decide.</h2>
+            <button type="button" onClick={() => setCheque(null)} className="shrink-0 text-sm text-muted underline hover:text-ink">
+              Close
+            </button>
+          </div>
+          <Cheque key={cheque.purchaseId} purchase={cheque} />
+        </section>
+      )}
       <div ref={box} className="overflow-x-clip" style={{ height: mode === "edit" ? 820 : contentHeight ? contentHeight + 16 : phone ? 1200 : 640 }}>
-        <AgStudio
-          theme={phone ? phoneTheme : desktopTheme}
-          data={data}
-          mode={mode}
-          modules={modules}
-          panels={panels}
-          initialState={layout as never}
-          loadThemeGoogleFonts={false}
-          ai={({ api }: { api: AgStudioApi }) => createAiHarness(api, { adapter: geminiAdapter, primary: "lead", promptStarters })}
-          onApiReady={(e) => {
-            // Exposed so the default layout can be captured during development.
-            (window as unknown as { chaperoneStudio?: AgStudioApi }).chaperoneStudio = e.api;
-          }}
-          style={{ height: "100%", width: "100%" }}
-        />
+        <AgStudioProvider licenseKey={licenseKey}>
+          <AgStudio
+            theme={phone ? phoneTheme : desktopTheme}
+            data={data}
+            widgets={chaperoneWidgets as never}
+            mode={mode}
+            modules={modules}
+            panels={panels}
+            initialState={layout as never}
+            loadThemeGoogleFonts={false}
+            ai={({ api: studio }: { api: AgStudioApi }) => createAiHarness(studio, chaperoneHarness(studio))}
+            aiToolDisplay={aiToolDisplay as never}
+            onApiReady={(e) => {
+              api.current = e.api;
+              // Exposed so the default layout can be captured during development.
+              (window as unknown as { chaperoneStudio?: AgStudioApi }).chaperoneStudio = e.api;
+            }}
+            onStateUpdated={(e: { state: AgReportState }) => {
+              setPages(e.state.pages.map((p) => p.id));
+              setPageId((current) => {
+                if (current !== e.state.selectedPageId) setContentHeight(null);
+                return e.state.selectedPageId;
+              });
+            }}
+            style={{ height: "100%", width: "100%" }}
+          />
+        </AgStudioProvider>
       </div>
     </div>
   );

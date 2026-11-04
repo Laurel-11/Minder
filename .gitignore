@@ -19,6 +19,7 @@ Thumbs.db
 # Windows helper scripts and Render settings (contain local notes / secrets)
 *.bat
 render.env
+render-*.env
 # private planning notes (Chinese)
 项目方案.md
 交接说明.md

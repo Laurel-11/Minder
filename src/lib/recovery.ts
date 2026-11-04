@@ -6,7 +6,7 @@ import { deliveryNow, isLate } from "./delivery";
 import { log } from "./log";
 import { merchantReply } from "./merchant-bots";
 import { usd, toValue } from "./money";
-import { acceptClaim, getDispute, refundCapture, simulateChargeback } from "./paypal";
+import { acceptClaim, CHARGEBACK_REASON, getDispute, refundCapture, simulateChargeback } from "./paypal";
 import { PurchaseError } from "./purchases";
 import { judgeOffer, writeClaim } from "./recovery-ai";
 import { findBlockedMerchant } from "./rules";
@@ -100,7 +100,7 @@ export async function resolveCase(caseId: string, action: "accept" | "escalate")
     messages.push({ from: "paypal", at: now, text: `PayPal refunded ${usd(offer.amount)} to you (refund ${r.refundId}, ${r.status.toLowerCase()}).` });
   } else {
     const note = `${c.problem === "not_delivered" ? "Paid order never shipped" : "Item arrived damaged"}. ${c.messages[0].text}`.slice(0, 200);
-    const { disputeId } = await simulateChargeback({ captureId: p.paypal.captureId!, amount: { currency_code: "USD", value: toValue(p.total) }, note });
+    const { disputeId } = await simulateChargeback({ captureId: p.paypal.captureId!, amount: { currency_code: "USD", value: toValue(p.total) }, note, reasonCode: CHARGEBACK_REASON[c.problem] });
     if (!disputeId) throw new PurchaseError("PayPal did not return a dispute ID.", 502);
     patch.dispute = { disputeId, status: "OPEN", updatedAt: now };
     patch.status = "escalated";

@@ -225,7 +225,10 @@ export async function acceptClaim(disputeId: string, note: string) {
  * Sandbox only: PayPal's chargeback simulator. Used to escalate a case to PayPal in the demo,
  * because the sandbox does not let a third-party app open a dispute in the buyer's name.
  */
-export async function simulateChargeback(input: { captureId: string; amount: Money; note: string }) {
+/** Visa reason codes: 13.1 merchandise not received, 13.3 not as described or defective. */
+export const CHARGEBACK_REASON = { not_delivered: "1310", damaged: "1330" } as const;
+
+export async function simulateChargeback(input: { captureId: string; amount: Money; note: string; reasonCode?: string }) {
   const now = new Date();
   const r = await call<{ dispute_id?: string }>("POST", "/v2/customer-support/process-chargeback", {
     body: {
@@ -245,7 +248,7 @@ export async function simulateChargeback(input: { captureId: string; amount: Mon
         money_movement_date: now.toISOString(),
         event_type: "DEBIT",
         chargeback_type: "REPORTED_TO_PROCESSOR",
-        processor_info: { reference_number: `${Date.now()}000000000`, reason_code: "1330", notes: input.note.slice(0, 200) },
+        processor_info: { reference_number: `${Date.now()}000000000`, reason_code: input.reasonCode ?? "1330", notes: input.note.slice(0, 200) },
       },
     },
   });

@@ -1,7 +1,9 @@
-// Server half of the AG Studio <-> Gemini adapter. Studio's agents run in the browser and send each
-// turn here; we translate it to Gemini function calling, so the Gemini API key never leaves the server.
+// Server half of the AG Studio <-> LLM adapter. Studio's agents run in the browser and send each turn
+// here; we translate it to DeepSeek (OpenAI-style) or Gemini function calling, so no AI key ever
+// leaves the server. DeepSeek is tried first when its key is set; Gemini is the fallback.
 import type { AgLlmRequest, AgLlmResponse } from "ag-studio";
 import crypto from "node:crypto";
+import { DEEPSEEK } from "@/lib/ai";
 import { env } from "@/lib/env";
 import { fetchWithTimeout, sleep } from "@/lib/http";
 import { log } from "@/lib/log";
@@ -157,6 +159,126 @@ function fromGemini(reply: GeminiReply, model: string): AgLlmResponse {
   };
 }
 
+// ---------- DeepSeek: OpenAI-style chat completions ----------
+
+type ChatMessage =
+  | { role: "system" | "user"; content: string }
+  | { role: "assistant"; content: string | null; tool_calls?: { id: string; type: "function"; function: { name: string; arguments: string } }[] }
+  | { role: "tool"; tool_call_id: string; content: string };
+
+function toChat(request: AgLlmRequest) {
+  const system: string[] = request.instructions ? [request.instructions] : [];
+  const messages: ChatMessage[] = [];
+  const issued = new Set<string>();
+  for (const item of request.input) {
+    if (item.type === "message") {
+      const text = textOf(item.content);
+      if (!text) continue;
+      if (item.role === "system") system.push(text);
+      else if (item.role === "assistant") messages.push({ role: "assistant", content: text });
+      else messages.push({ role: "user", content: text });
+    } else if (item.type === "function_call") {
+      issued.add(item.callId);
+      const call = { id: item.callId, type: "function" as const, function: { name: item.name, arguments: item.arguments || "{}" } };
+      const last = messages[messages.length - 1];
+      // Calls made in the same turn belong to one assistant message, after any text it wrote.
+      if (last && last.role === "assistant") last.tool_calls = [...(last.tool_calls ?? []), call];
+      else messages.push({ role: "assistant", content: null, tool_calls: [call] });
+    } else if (item.type === "function_call_output") {
+      if (issued.has(item.callId)) messages.push({ role: "tool", tool_call_id: item.callId, content: item.output || "{}" });
+      else messages.push({ role: "user", content: `Tool result: ${item.output}` });
+    }
+  }
+  if (!messages.some((m) => m.role === "user")) messages.unshift({ role: "user", content: "Continue." });
+  const ordered = pairToolResults(messages);
+  if (request.responseFormat?.type === "json") {
+    system.push(`Answer with a single JSON object and nothing else, matching this JSON Schema:\n${JSON.stringify(sanitizeSchema(request.responseFormat.schema))}`);
+  }
+  const body: Record<string, unknown> = {
+    model: env.deepseekModel,
+    messages: [{ role: "system", content: system.join("\n\n") || "You are a helpful assistant." }, ...ordered],
+    temperature: 0.2,
+    max_tokens: 8000,
+    // Studio's agents make many small turns: no thinking keeps each one fast, and means no reasoning
+    // has to be carried from turn to turn.
+    thinking: { type: "disabled" },
+  };
+  const tools = (request.tools ?? []).filter((t) => t.kind !== "provided");
+  if (tools.length) {
+    body.tools = tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: sanitizeSchema(t.parameters ?? { type: "object", properties: {} }) } }));
+    const choice = request.toolChoice ?? "auto";
+    body.tool_choice = typeof choice === "object" ? { type: "function", function: { name: choice.name } } : choice;
+  }
+  if (request.responseFormat?.type === "json") body.response_format = { type: "json_object" };
+  return body;
+}
+
+/**
+ * OpenAI-style APIs reject a history where a tool call is not answered right after it. Move each
+ * result next to its call, and answer calls that never got a result (a cancelled run) with a note.
+ */
+function pairToolResults(messages: ChatMessage[]): ChatMessage[] {
+  const results = new Map<string, ChatMessage>();
+  for (const m of messages) if (m.role === "tool") results.set(m.tool_call_id, m);
+  const out: ChatMessage[] = [];
+  for (const m of messages) {
+    if (m.role === "tool") continue;
+    out.push(m);
+    if (m.role === "assistant" && m.tool_calls?.length) {
+      for (const call of m.tool_calls) out.push(results.get(call.id) ?? { role: "tool", tool_call_id: call.id, content: JSON.stringify({ error: "This call did not finish." }) });
+    }
+  }
+  return out;
+}
+
+type ChatReply = {
+  choices?: { message?: { content?: string | null; tool_calls?: { id?: string; function?: { name?: string; arguments?: string } }[] }; finish_reason?: string }[];
+  usage?: { prompt_tokens?: number; completion_tokens?: number };
+  error?: { message?: string };
+};
+
+function fromChat(reply: ChatReply, model: string): AgLlmResponse {
+  const choice = reply.choices?.[0];
+  const output: AgLlmResponse["output"] = [];
+  const text = choice?.message?.content ?? "";
+  if (text) output.push({ id: rid("msg"), kind: "output", type: "message", role: "assistant", status: "completed", content: [{ type: "text", text, annotations: [] }] });
+  for (const tc of choice?.message?.tool_calls ?? []) {
+    if (!tc.function?.name) continue;
+    output.push({ id: rid("fc"), kind: "output", type: "function_call", callId: tc.id ?? rid("call"), name: tc.function.name, arguments: tc.function.arguments || "{}", status: "completed" });
+  }
+  const cut = choice?.finish_reason === "length";
+  return { id: rid("resp"), createdAt: Date.now(), status: cut ? "incomplete" : "completed", incompleteDetails: cut ? { reason: "max_output_tokens" } : undefined, output, model };
+}
+
+/** One DeepSeek turn, retried on 429/5xx. Returns null when DeepSeek is not set up or keeps failing. */
+async function askDeepSeek(request: AgLlmRequest, errors: string[]): Promise<AgLlmResponse | null> {
+  if (!env.aiProviders.includes("deepseek")) return null;
+  const body = toChat(request);
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const started = Date.now();
+    try {
+      const res = await fetchWithTimeout(
+        `${DEEPSEEK}/chat/completions`,
+        { method: "POST", headers: { Authorization: `Bearer ${env.deepseekApiKey}`, "Content-Type": "application/json" }, body: JSON.stringify(body) },
+        90_000,
+      );
+      const reply = (await res.json().catch(() => ({}))) as ChatReply;
+      if (res.ok) {
+        const out = fromChat(reply, env.deepseekModel);
+        log("studio.ai.ok", { model: env.deepseekModel, ms: Date.now() - started, tools: (request.tools ?? []).length, calls: out.output.filter((o) => o.type === "function_call").length, tokensIn: reply.usage?.prompt_tokens });
+        return out;
+      }
+      errors.push(`${env.deepseekModel}: HTTP ${res.status}`);
+      log("studio.ai.error", { model: env.deepseekModel, status: res.status, message: reply.error?.message?.slice(0, 200) });
+      if (res.status !== 429 && res.status < 500) return null;
+      await sleep(2000 * attempt);
+    } catch (e) {
+      errors.push(`${env.deepseekModel}: ${(e as Error).message}`);
+    }
+  }
+  return null;
+}
+
 const failed = (message: string): AgLlmResponse => ({
   id: rid("resp"),
   createdAt: Date.now(),
@@ -170,8 +292,11 @@ const coolDown = new Map<string, number>();
 
 export async function POST(req: Request) {
   const request = (await req.json()) as AgLlmRequest;
-  const geminiBody = toGemini(request);
   const errors: string[] = [];
+  const fromDeepSeek = await askDeepSeek(request, errors);
+  if (fromDeepSeek) return Response.json(fromDeepSeek);
+  if (!env.aiProviders.includes("gemini")) return Response.json(failed(`The AI is busy right now. Try again in a minute. (${errors.slice(-3).join(" | ") || "no AI key is set"})`));
+  const geminiBody = toGemini(request);
   for (let round = 1; round <= 2; round++) {
     let retryable = false;
     for (const model of env.geminiModels) {
@@ -195,6 +320,7 @@ export async function POST(req: Request) {
         errors.push(`${model}: HTTP ${res.status}`);
         log("studio.ai.error", { model, status: res.status, message: reply.error?.message?.slice(0, 200) });
         if (res.status === 429) coolDown.set(model, Date.now() + 60_000);
+        if (res.status === 401 || res.status === 403) break; // the key itself is refused: no other Gemini model will work
         // 429 = this model's free quota is used up, 503 = model busy: both mean "try another model".
         if (res.status === 429 || res.status === 503) retryable = true;
       } catch (e) {
