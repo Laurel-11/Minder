@@ -127,7 +127,7 @@
           }
         },
         "flow": {
-          "type": "chaperone-money-flow",
+          "type": "minder-money-flow",
           "format": {
             "title": {
               "enabled": true,
@@ -135,7 +135,7 @@
             },
             "subtitle": {
               "enabled": true,
-              "text": "Every dollar ShopBot asked to spend, through Chaperone's three checks. Click a block to filter."
+              "text": "Every dollar ShopBot asked to spend, through Minder's three checks. Click a block to filter."
             },
             "style": {
               "showAmounts": true,
@@ -170,7 +170,7 @@
           "format": {
             "title": {
               "enabled": true,
-              "text": "Chaperone's calls"
+              "text": "Minder's calls"
             },
             "subtitle": {
               "enabled": true,
@@ -405,7 +405,7 @@
           }
         },
         "quotes": {
-          "type": "chaperone-store-tricks",
+          "type": "minder-store-tricks",
           "format": {
             "title": {
               "enabled": true,
@@ -452,7 +452,7 @@
             },
             "subtitle": {
               "enabled": true,
-              "text": "Purchases, by Chaperone's layer"
+              "text": "Purchases, by Minder's layer"
             }
           },
           "dataMapping": {
@@ -645,7 +645,7 @@
           }
         },
         "afterCheckout": {
-          "type": "chaperone-money-flow",
+          "type": "minder-money-flow",
           "format": {
             "title": {
               "enabled": true,

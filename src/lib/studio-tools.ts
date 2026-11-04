@@ -1,4 +1,4 @@
-// Server half of the tools Chaperone's own AI agents use inside AG Studio: look a purchase up,
+// Server half of the tools Minder's own AI agents use inside AG Studio: look a purchase up,
 // check it against PayPal's records, and replay past purchases under different rules. All three
 // only read; the one thing that moves money (approving a held purchase) stays a button the owner
 // presses.
@@ -84,18 +84,18 @@ export function findPurchases(db: Db, query: string, limit = 3): PurchaseRecord[
   return scored.slice(0, limit).map((x) => toRecord(x.p, db.cases));
 }
 
-export type PayPalCheck = { label: string; chaperone: string; paypal: string; match: boolean };
+export type PayPalCheck = { label: string; minder: string; paypal: string; match: boolean };
 export type Verification = { purchaseId: string; store: string; orderId?: string; checks: PayPalCheck[]; allMatch: boolean; summary: string };
 
 const amountOf = (a: unknown) => Number((a as { value?: string } | undefined)?.value ?? NaN);
 
-/** Ask PayPal itself what happened to a purchase's money, and compare it with Chaperone's own record. */
+/** Ask PayPal itself what happened to a purchase's money, and compare it with Minder's own record. */
 export async function verifyWithPayPal(db: Db, purchaseId: string): Promise<Verification> {
   const p = db.purchases.find((x) => x.id === purchaseId);
   if (!p) throw new Error(`No purchase ${purchaseId}.`);
   const store = p.request.merchant.name;
   if (!p.paypal.orderId) {
-    const why = p.status === "blocked" ? "Chaperone blocked it before any PayPal order existed" : "There is no PayPal order for it";
+    const why = p.status === "blocked" ? "Minder blocked it before any PayPal order existed" : "There is no PayPal order for it";
     return { purchaseId, store, checks: [], allMatch: true, summary: `${why}, so no money could move. Nothing to check in PayPal.` };
   }
 
@@ -106,37 +106,37 @@ export async function verifyWithPayPal(db: Db, purchaseId: string): Promise<Veri
   const captures = payments.captures ?? [];
   const auths = payments.authorizations ?? [];
   const orderAmount = amountOf(unit.amount);
-  checks.push({ label: "Order amount", chaperone: usd(p.total), paypal: Number.isNaN(orderAmount) ? "Not shown" : usd(orderAmount), match: Math.abs(orderAmount - p.total) < 0.005 });
+  checks.push({ label: "Order amount", minder: usd(p.total), paypal: Number.isNaN(orderAmount) ? "Not shown" : usd(orderAmount), match: Math.abs(orderAmount - p.total) < 0.005 });
 
   const captured = captures.filter((c) => c.status === "COMPLETED" || c.status === "PARTIALLY_REFUNDED" || c.status === "REFUNDED");
   const capturedSum = captured.reduce((s, c) => s + (amountOf(c.amount) || 0), 0);
   const authStatus = (auths[0]?.status as string | undefined) ?? "";
   const moneyMoved = p.status === "paid" || p.status === "approved_by_owner";
   if (moneyMoved) {
-    checks.push({ label: "Money sent to the store", chaperone: usd(p.total), paypal: captured.length ? `${usd(capturedSum)} captured` : "Nothing captured", match: Math.abs(capturedSum - p.total) < 0.005 });
+    checks.push({ label: "Money sent to the store", minder: usd(p.total), paypal: captured.length ? `${usd(capturedSum)} captured` : "Nothing captured", match: Math.abs(capturedSum - p.total) < 0.005 });
   } else if (p.status === "awaiting_owner") {
-    checks.push({ label: "Money held, not sent", chaperone: "Held until you decide", paypal: authStatus ? `Authorization ${authStatus.toLowerCase()}` : "No authorization", match: authStatus === "CREATED" && captured.length === 0 });
+    checks.push({ label: "Money held, not sent", minder: "Held until you decide", paypal: authStatus ? `Authorization ${authStatus.toLowerCase()}` : "No authorization", match: authStatus === "CREATED" && captured.length === 0 });
   } else if (p.status === "declined_by_owner") {
-    checks.push({ label: "Hold released", chaperone: "You declined it", paypal: authStatus ? `Authorization ${authStatus.toLowerCase()}` : "No authorization", match: authStatus === "VOIDED" && captured.length === 0 });
+    checks.push({ label: "Hold released", minder: "You declined it", paypal: authStatus ? `Authorization ${authStatus.toLowerCase()}` : "No authorization", match: authStatus === "VOIDED" && captured.length === 0 });
   } else {
-    checks.push({ label: "No money sent", chaperone: STATUS_LABEL[p.status], paypal: captured.length ? `${usd(capturedSum)} captured` : "Nothing captured", match: captured.length === 0 });
+    checks.push({ label: "No money sent", minder: STATUS_LABEL[p.status], paypal: captured.length ? `${usd(capturedSum)} captured` : "Nothing captured", match: captured.length === 0 });
   }
 
   const c = db.cases.find((x) => x.purchaseId === p.id);
   if (c?.refund) {
     const r = await getRefund(c.refund.refundId);
     const amt = amountOf(r.amount);
-    checks.push({ label: "Refund", chaperone: usd(c.refund.amount), paypal: `${Number.isNaN(amt) ? "?" : usd(amt)} ${String(r.status ?? "").toLowerCase()}`, match: Math.abs(amt - c.refund.amount) < 0.005 && r.status === "COMPLETED" });
+    checks.push({ label: "Refund", minder: usd(c.refund.amount), paypal: `${Number.isNaN(amt) ? "?" : usd(amt)} ${String(r.status ?? "").toLowerCase()}`, match: Math.abs(amt - c.refund.amount) < 0.005 && r.status === "COMPLETED" });
   }
   if (c?.dispute) {
     const d = await getDispute(c.dispute.disputeId);
-    checks.push({ label: "PayPal dispute", chaperone: c.dispute.status.toLowerCase().replaceAll("_", " "), paypal: String(d.status ?? "").toLowerCase().replaceAll("_", " "), match: d.status === c.dispute.status });
+    checks.push({ label: "PayPal dispute", minder: c.dispute.status.toLowerCase().replaceAll("_", " "), paypal: String(d.status ?? "").toLowerCase().replaceAll("_", " "), match: d.status === c.dispute.status });
   }
 
   const allMatch = checks.every((x) => x.match);
   const summary = allMatch
-    ? `PayPal's records agree with Chaperone on all ${checks.length} checks for the ${store} order.`
-    : `PayPal disagrees with Chaperone on ${checks.filter((x) => !x.match).map((x) => x.label.toLowerCase()).join(", ")}.`;
+    ? `PayPal's records agree with Minder on all ${checks.length} checks for the ${store} order.`
+    : `PayPal disagrees with Minder on ${checks.filter((x) => !x.match).map((x) => x.label.toLowerCase()).join(", ")}.`;
   return { purchaseId, store, orderId: p.paypal.orderId, checks, allMatch, summary };
 }
 
@@ -198,7 +198,7 @@ function applyChanges(policy: Policy, ch: RuleChanges): { policy: Policy; descri
 const LABEL: Record<Outcome, string> = { approve: "Approved", hold: "Asked you", block: "Blocked" };
 
 /**
- * Replay every past purchase, oldest first, through the same rules code Chaperone runs, under the
+ * Replay every past purchase, oldest first, through the same rules code Minder runs, under the
  * changed rules. The AI review is not re-run: where it ran, its verdict is kept; where the code
  * limits stopped a purchase before it, the replay says the AI would now have to look.
  */

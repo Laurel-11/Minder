@@ -14,7 +14,7 @@ export function DemoClock({ days }: { days: number }) {
     setNote(null);
     const res = await fetch("/api/demo/clock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const json = (await res.json()) as { casesOpened?: number };
-    if (json.casesOpened) setNote(`Chaperone noticed ${json.casesOpened === 1 ? "a late order" : `${json.casesOpened} late orders`} and opened a case.`);
+    if (json.casesOpened) setNote(`Minder noticed ${json.casesOpened === 1 ? "a late order" : `${json.casesOpened} late orders`} and opened a case.`);
     setBusy(false);
     router.refresh();
   }

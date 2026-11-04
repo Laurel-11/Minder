@@ -1,12 +1,12 @@
-// Chaperone's own AG Studio widget types, registered next to Studio's built-in ones. They show up
-// in the widget menu under "Chaperone", and the AI agents can add and configure them like any other.
+// Minder's own AG Studio widget types, registered next to Studio's built-in ones. They show up
+// in the widget menu under "Minder", and the AI agents can add and configure them like any other.
 import type { AgFormatShapeParams, AgShapeBuilder, AgWidgetFormParams, AgWidgetsConfig } from "ag-studio";
 import { createWidgets } from "ag-studio-react";
 import MoneyFlowWidget from "./MoneyFlowWidget";
 import StoreTricksWidget from "./StoreTricksWidget";
 
-export const MONEY_FLOW = "chaperone-money-flow";
-export const STORE_TRICKS = "chaperone-store-tricks";
+export const MONEY_FLOW = "minder-money-flow";
+export const STORE_TRICKS = "minder-store-tricks";
 
 type StyleBuilder = (s: AgShapeBuilder) => ReturnType<AgShapeBuilder["object"]>;
 
@@ -64,7 +64,7 @@ const moneyFlow = {
       required: true,
       intent: "category",
       aiDescription:
-        "Ordered stages the money passes through, left to right (2 to 5 fields from one table). Chaperone's story is flows.askedToPay, flows.whichCheck, flows.atCheckout, flows.whereNow.",
+        "Ordered stages the money passes through, left to right (2 to 5 fields from one table). Minder's story is flows.askedToPay, flows.whichCheck, flows.atCheckout, flows.whereNow.",
     },
     value: {
       type: "field",
@@ -89,7 +89,7 @@ const moneyFlow = {
       ],
     }),
   defaultState: {
-    format: { title: { enabled: true, text: "Where the money went" }, subtitle: { enabled: true, text: "Every dollar ShopBot asked to spend, through Chaperone's checks" } },
+    format: { title: { enabled: true, text: "Where the money went" }, subtitle: { enabled: true, text: "Every dollar ShopBot asked to spend, through Minder's checks" } },
     dataMapping: {
       stages: [{ id: "flows.askedToPay" }, { id: "flows.whichCheck" }, { id: "flows.atCheckout" }, { id: "flows.whereNow" }],
       value: [{ id: "flows.amount", aggregation: "sum" }],
@@ -102,9 +102,9 @@ const moneyFlow = {
   ai: {
     label: "Money flow (sankey)",
     description:
-      "Chaperone's own widget: a sankey diagram of where money went, stage by stage. Ribbons are coloured by where the money ended up (green stayed with the owner, amber is waiting, slate reached a store). Clicking a block filters the dashboard.",
+      "Minder's own widget: a sankey diagram of where money went, stage by stage. Ribbons are coloured by where the money ended up (green stayed with the owner, amber is waiting, slate reached a store). Clicking a block filters the dashboard.",
     usage:
-      "Use it to show how money moved through Chaperone's checks: how much was blocked by code limits or the AI review, held for the owner's signature, paid, refunded, or disputed. Prefer it over a bar chart whenever the question is 'where did the money go'.",
+      "Use it to show how money moved through Minder's checks: how much was blocked by code limits or the AI review, held for the owner's signature, paid, refunded, or disputed. Prefer it over a bar chart whenever the question is 'where did the money go'.",
     configuration:
       "Map stages to 2-5 category fields from the flows table in order, e.g. flows.askedToPay, flows.whichCheck, flows.atCheckout, flows.whereNow; or flows.merchant then flows.whereNow for a per-store view. Map value to flows.amount with sum.",
   },
@@ -117,7 +117,7 @@ const storeTricks = {
   dataMapping: {
     quote: { type: "field", supportedRoles: ["category"], required: true, intent: "category", aiDescription: "The words the store's page aimed at AI agents: tricks.quote." },
     store: { type: "field", supportedRoles: ["category"], intent: "category", aiDescription: "The store: tricks.merchant. Clicking a quote filters the dashboard to that store." },
-    outcome: { type: "field", supportedRoles: ["category"], intent: "category", aiDescription: "What Chaperone did about it: tricks.outcome. Shown as a stamp." },
+    outcome: { type: "field", supportedRoles: ["category"], intent: "category", aiDescription: "What Minder did about it: tricks.outcome. Shown as a stamp." },
     amount: {
       type: "field",
       supportedRoles: ["numeric"],
@@ -151,16 +151,16 @@ const storeTricks = {
   featureConfig: { crossFilter: { supportsHighlight: false } },
   ai: {
     label: "What stores told your agent (quote wall)",
-    description: "Chaperone's own widget: the exact text store pages hid for AI shopping agents, each stamped with what Chaperone did. Clicking a quote filters the dashboard to that store.",
+    description: "Minder's own widget: the exact text store pages hid for AI shopping agents, each stamped with what Minder did. Clicking a quote filters the dashboard to that store.",
     usage: "Use it to show prompt-injection or manipulation attempts by stores, in their own words. Use the tricks table.",
     configuration: "Map quote to tricks.quote, store to tricks.merchant, outcome to tricks.outcome and amount to tricks.amount (sum).",
   },
 };
 
-/** Studio's widgets plus Chaperone's two, with ours first in the menu. */
-export function chaperoneWidgets(defaults: AgWidgetsConfig): AgWidgetsConfig {
+/** Studio's widgets plus Minder's two, with ours first in the menu. */
+export function minderWidgets(defaults: AgWidgetsConfig): AgWidgetsConfig {
   return createWidgets({
     additionalTypes: [moneyFlow, storeTricks],
-    menu: [{ label: "Chaperone", widgetIds: [MONEY_FLOW, STORE_TRICKS] }, ...defaults.menu],
+    menu: [{ label: "Minder", widgetIds: [MONEY_FLOW, STORE_TRICKS] }, ...defaults.menu],
   } as never) as unknown as AgWidgetsConfig;
 }

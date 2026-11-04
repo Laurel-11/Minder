@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 type J = Record<string, unknown>;
 const amountOf = (a: unknown) => (a as { value?: string } | undefined)?.value;
 
-/** Look a record up in PayPal itself, so the self-test checks PayPal's books rather than Chaperone's own. */
+/** Look a record up in PayPal itself, so the self-test checks PayPal's books rather than Minder's own. */
 export async function POST(request: Request) {
   if (!adminAllowed(request)) return adminDenied();
   const { kind, id } = (await request.json().catch(() => ({}))) as { kind?: string; id?: string };

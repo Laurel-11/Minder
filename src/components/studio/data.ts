@@ -20,12 +20,12 @@ const purchaseFields: AgFieldDefinition[] = [
   text("request", "What you asked for", "The owner's own words to ShopBot."),
   text("items", "Items"),
   usd("amount", "Order total"),
-  text("decision", "Chaperone's call", "Approved, Asked you, or Blocked."),
+  text("decision", "Minder's call", "Approved, Asked you, or Blocked."),
   text("status", "Status"),
   text("whichCheck", "Which check", "The layer that settled it: Code limits, AI review, Your signature, or Passed every check."),
   text("atCheckout", "At checkout", "Paid, Blocked, Declined, Waiting for you, or Payment failed."),
   usd("spent", "Money spent", "Money that actually moved through PayPal."),
-  usd("keptSafe", "Money kept safe", "Orders Chaperone blocked or the owner declined: never paid."),
+  usd("keptSafe", "Money kept safe", "Orders Minder blocked or the owner declined: never paid."),
   usd("refunded", "Refunded", "Money recovered afterwards through a PayPal refund."),
   text("aiVerdict", "AI review"),
   text("manipulation", "Manipulation", "Whether the AI review found the store's page steering the agent."),
@@ -46,7 +46,7 @@ const itemFields: AgFieldDefinition[] = [
 ];
 
 const decisionFields: AgFieldDefinition[] = [
-  text("decision", "Chaperone's call"),
+  text("decision", "Minder's call"),
   { id: "purchases", name: "Purchases", format: "integerFormat" },
   usd("amount", "Amount"),
 ];
@@ -126,9 +126,9 @@ const asDates = <T extends { date: string }>(rows: T[]) => rows.map((r) => ({ ..
 export function buildStudioData(rows: DashboardRows): AgDataSourcesDefinition {
   return {
     sources: [
-      { id: "purchases", name: "Purchases", description: "One row per purchase ShopBot tried to make, with Chaperone's decision.", fields: purchaseFields, data: asDates(rows.purchases) },
+      { id: "purchases", name: "Purchases", description: "One row per purchase ShopBot tried to make, with Minder's decision.", fields: purchaseFields, data: asDates(rows.purchases) },
       { id: "items", name: "Items", description: "One row per item in those purchases.", fields: itemFields, data: asDates(rows.items) },
-      { id: "decisions", name: "Chaperone's calls", description: "How many purchases Chaperone approved, asked the owner about, or blocked.", fields: decisionFields, data: rows.decisions },
+      { id: "decisions", name: "Minder's calls", description: "How many purchases Minder approved, asked the owner about, or blocked.", fields: decisionFields, data: rows.decisions },
       { id: "budgets", name: "Budget", description: "The owner's spending budget from their rules, and how much of it is used this period.", fields: budgetFields, data: rows.budget },
       {
         id: "flows",
@@ -138,7 +138,7 @@ export function buildStudioData(rows: DashboardRows): AgDataSourcesDefinition {
         data: rows.flows,
       },
       { id: "tricks", name: "Store tricks", description: "Store pages the AI review caught steering ShopBot, with the words they used.", fields: trickFields, data: asDates(rows.tricks) },
-      { id: "cases", name: "Recovery cases", description: "Paid orders that went wrong afterwards, and how Chaperone and PayPal got the money back.", fields: caseFields, data: asDates(rows.cases) },
+      { id: "cases", name: "Recovery cases", description: "Paid orders that went wrong afterwards, and how Minder and PayPal got the money back.", fields: caseFields, data: asDates(rows.cases) },
       { id: "caseSteps", name: "Case steps", description: "Every step of every recovery case, in order: who did what, and when.", fields: caseStepFields, data: asDates(rows.caseSteps) },
     ],
     relationships: [

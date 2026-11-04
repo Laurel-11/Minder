@@ -5,7 +5,7 @@ import type { Offer, RecoveryCase } from "@/lib/types";
 import { BlockStore } from "./BlockStore";
 import { CaseActions } from "./CaseActions";
 
-const WHO: Record<string, string> = { chaperone: "Chaperone", merchant: "Store", paypal: "PayPal", owner: "You" };
+const WHO: Record<string, string> = { minder: "Minder", merchant: "Store", paypal: "PayPal", owner: "You" };
 const offerText = (o?: Offer) => (!o || o.kind === "none" ? "" : o.kind === "full_refund" ? `full refund (${usd(o.amount)})` : `${usd(o.amount)} back`);
 
 export function CaseView({
@@ -25,13 +25,13 @@ export function CaseView({
       ? `${usd(c.refund?.amount ?? 0)} is back in your PayPal.`
       : c.status === "escalated"
         ? `Escalated to PayPal: ${disputeInWords(c.dispute?.status ?? "OPEN")}`
-        : "Chaperone needs your decision.";
+        : "Minder needs your decision.";
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-line bg-paper p-5">
       <div>
         <p className="text-sm text-muted">
-          {c.openedBy === "chaperone" ? "Chaperone noticed this order never shipped and opened a case." : `You reported that it ${c.problem === "not_delivered" ? "never arrived" : "arrived damaged"}.`}
+          {c.openedBy === "minder" ? "Minder noticed this order never shipped and opened a case." : `You reported that it ${c.problem === "not_delivered" ? "never arrived" : "arrived damaged"}.`}
         </p>
         <h2 className={`mt-1 text-xl font-semibold ${c.status === "refunded" ? "text-approve" : ""}`}>{headline}</h2>
       </div>
@@ -41,7 +41,7 @@ export function CaseView({
           <li key={n} className={`rounded-lg px-4 py-3 text-sm ${m.from === "merchant" ? "bg-[#f4f2fb]" : m.from === "paypal" ? "bg-approve-soft" : "bg-canvas"}`}>
             <p className="font-medium">
               {m.from === "merchant" ? storeName : WHO[m.from]}
-              {m.from === "chaperone" && n === 0 ? ` to ${storeName}` : ""}
+              {m.from === "minder" && n === 0 ? ` to ${storeName}` : ""}
             </p>
             <p className="mt-1 leading-relaxed">{m.text}</p>
           </li>
@@ -51,7 +51,7 @@ export function CaseView({
       {c.status === "offer_to_review" && c.recommendation && (
         <div className="flex flex-col gap-3 border-t border-line pt-4">
           <p className="text-sm">
-            <span className="font-medium">Chaperone recommends {c.recommendation.action === "accept" ? "accepting" : "escalating to PayPal"}. </span>
+            <span className="font-medium">Minder recommends {c.recommendation.action === "accept" ? "accepting" : "escalating to PayPal"}. </span>
             {c.recommendation.reasoning}
           </p>
           <CaseActions caseId={c.id} mode="decide" offerLabel={offerText(lastOffer) || undefined} recommended={c.recommendation.action} />
@@ -71,7 +71,7 @@ export function CaseView({
       {c.status !== "offer_to_review" && canBlockStore && <BlockStore caseId={c.id} storeName={storeName} problem={c.problem} blocked={storeBlocked} />}
 
       <details className="text-sm text-muted">
-        <summary className="cursor-pointer">Evidence timeline Chaperone sent</summary>
+        <summary className="cursor-pointer">Evidence timeline Minder sent</summary>
         <ul className="mt-2 space-y-1">
           {c.timeline.map((t, n) => (
             <li key={n}>

@@ -41,7 +41,7 @@ export async function assessPurchase(input: { policy: Policy; rulesText?: string
   // Show only the reasons that explain the final decision (a block should not also say "you decide").
   const reasons = rules.checks.filter((c) => c.outcome === decision).map((c) => c.message);
   if (ai && (ai.verdict === decision || decision === "hold")) reasons.push(ai.summaryForOwner);
-  if (aiError && decision === "hold") reasons.push("The AI reviewer was unavailable, so Chaperone is asking you to decide.");
+  if (aiError && decision === "hold") reasons.push("The AI reviewer was unavailable, so Minder is asking you to decide.");
   if (decision === "approve") {
     // For an approval, the useful lines are what the AI saw and how much budget is left, not every passed check.
     reasons.length = 0;

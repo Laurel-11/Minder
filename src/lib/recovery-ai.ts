@@ -1,4 +1,4 @@
-// Chaperone's AI work after a purchase goes wrong: write the claim, and judge the store's offer.
+// Minder's AI work after a purchase goes wrong: write the claim, and judge the store's offer.
 import { generateJson, type Schema } from "./ai";
 import { shortDateTime } from "./format";
 import { usd } from "./money";

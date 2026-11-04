@@ -93,7 +93,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
         <h2 className="text-lg font-semibold">Activity</h2>
         {db.purchases.length === 0 ? (
           <p className="text-muted">
-            Nothing yet. When your agent asks to pay for something, it appears here with Chaperone&apos;s decision and the reason.
+            Nothing yet. When your agent asks to pay for something, it appears here with Minder&apos;s decision and the reason.
           </p>
         ) : (
           db.purchases.map((p) => <PurchaseSlip key={p.id} purchase={p} note={noteFor(p, db)} link />)
@@ -111,7 +111,7 @@ function noteFor(p: Purchase, db: Db): { text: string; tone: string } | undefine
   if (c) {
     if (c.status === "refunded") return { text: `Money back: ${usd(c.refund?.amount ?? 0)} refunded through PayPal.`, tone: "text-approve" };
     if (c.status === "escalated") return { text: `Escalated to PayPal (case ${c.dispute?.disputeId}).`, tone: "text-hold" };
-    return { text: `${p.request.merchant.name} replied to Chaperone's claim. Your decision is needed.`, tone: "text-hold" };
+    return { text: `${p.request.merchant.name} replied to Minder's claim. Your decision is needed.`, tone: "text-hold" };
   }
   if (!p.delivery) return undefined;
   const now = demoNow(db);

@@ -1,4 +1,4 @@
-// Flattens Chaperone's purchase log and recovery cases into the tables the AG Studio dashboard reads.
+// Flattens Minder's purchase log and recovery cases into the tables the AG Studio dashboard reads.
 // Every table that describes purchases carries purchaseId, so the dashboard can relate them and a
 // click in one widget filters the others.
 import type { Outcome, Policy, Purchase, PurchaseStatus, RecoveryCase } from "./types";
@@ -15,7 +15,7 @@ export const DECISION_LABEL: Record<Outcome, string> = { approve: "Approved", ho
 const moneyMoved = (s: PurchaseStatus) => s === "paid" || s === "approved_by_owner";
 const keptSafe = (s: PurchaseStatus) => s === "blocked" || s === "declined_by_owner";
 
-/** Which of Chaperone's checks settled a purchase: the three layers, as the owner would name them. */
+/** Which of Minder's checks settled a purchase: the three layers, as the owner would name them. */
 export function checkpointOf(p: Purchase): string {
   if (p.status === "blocked") return p.rules.outcome === "block" ? "Code limits" : "AI review";
   if (p.status === "awaiting_owner" || p.status === "approved_by_owner" || p.status === "declined_by_owner") return "Your signature";
@@ -236,7 +236,7 @@ export function buildDashboardRows(purchases: Purchase[], opts: { policy?: Polic
         date: c.createdAt,
         merchant: p.request.merchant.name,
         problem: PROBLEM_LABEL[c.problem],
-        openedBy: c.openedBy === "chaperone" ? "Chaperone" : "You",
+        openedBy: c.openedBy === "minder" ? "Minder" : "You",
         status: CASE_STATUS_LABEL[c.status],
         storeOffered: offered,
         recovered: refundOf(c),
@@ -247,7 +247,7 @@ export function buildDashboardRows(purchases: Purchase[], opts: { policy?: Polic
     ];
   });
 
-  const WHO = { chaperone: "Chaperone", merchant: "The store", paypal: "PayPal", owner: "You" } as const;
+  const WHO = { minder: "Minder", merchant: "The store", paypal: "PayPal", owner: "You" } as const;
   const firstSentence = (t: string) => (t.replace(/\s+/g, " ").match(/^.*?[.!?](\s|$)/)?.[0] ?? t).trim();
   let seq = 0;
   const caseSteps: CaseStepRow[] = cases.flatMap((c) => {
@@ -264,12 +264,12 @@ export function buildDashboardRows(purchases: Purchase[], opts: { policy?: Polic
             ? "The store"
             : t.event.startsWith("You")
               ? "You"
-              : "Chaperone",
+              : "Minder",
       step: t.event.replace(/ \(capture [A-Z0-9]+\)/, ""),
     }));
     const fromMessages = c.messages.map((m) => {
       let step = firstSentence(m.text);
-      if (m.from === "chaperone") step = `Chaperone wrote to ${merchant} with the evidence and asked for ${m.offer?.kind === "full_refund" ? `a full refund of $${m.offer.amount.toFixed(2)}` : "a refund"}.`;
+      if (m.from === "minder") step = `Minder wrote to ${merchant} with the evidence and asked for ${m.offer?.kind === "full_refund" ? `a full refund of $${m.offer.amount.toFixed(2)}` : "a refund"}.`;
       else if (m.from === "merchant") step = !m.offer || m.offer.kind === "none" ? `${merchant} refused: "${firstSentence(m.text)}"` : `${merchant} offered $${m.offer.amount.toFixed(2)} back.`;
       return { at: m.at, who: WHO[m.from], step };
     });

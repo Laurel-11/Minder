@@ -52,7 +52,7 @@ export function ReportProblem({ purchaseId, delivered }: { purchaseId: string; d
         className="rounded-lg border border-line p-2 text-sm outline-none focus:border-ink"
       />
       <button onClick={submit} disabled={busy} className="w-fit rounded-lg bg-ink px-4 py-2 text-sm font-medium text-paper disabled:opacity-50">
-        {busy ? "Chaperone is writing to the store…" : "Get my money back"}
+        {busy ? "Minder is writing to the store…" : "Get my money back"}
       </button>
       {error && <p className="text-sm text-block">{error}</p>}
     </div>

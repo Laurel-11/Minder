@@ -8,7 +8,7 @@ export default function AgentPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Try it with a shopping agent</h1>
         <p className="mt-2 max-w-prose text-muted">
           ShopBot stands in for any AI agent that shops for you. It is deliberately gullible: it reads store pages and does what they say. Every time it
-          wants to pay, it has to ask Chaperone first. Browse the <Link href="/shops" className="underline underline-offset-2">demo stores</Link> it shops at.
+          wants to pay, it has to ask Minder first. Browse the <Link href="/shops" className="underline underline-offset-2">demo stores</Link> it shops at.
         </p>
       </div>
       <ShopBotChat />

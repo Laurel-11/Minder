@@ -23,7 +23,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-2 max-w-prose text-muted">
-          Maya&apos;s spending statement: everything ShopBot tried to buy, and what Chaperone did about it. Built with AG Studio, so you can ask for a new chart in
+          Maya&apos;s spending statement: everything ShopBot tried to buy, and what Minder did about it. Built with AG Studio, so you can ask for a new chart in
           plain words.
         </p>
       </div>

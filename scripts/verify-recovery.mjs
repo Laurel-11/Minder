@@ -1,4 +1,4 @@
-// Chaperone feasibility check #3: ways to get Maya's money back in the sandbox.
+// Minder feasibility check #3: ways to get Maya's money back in the sandbox.
 // A) merchant refund after agent-to-agent negotiation  B) escalation via PayPal's sandbox chargeback simulator
 // No login needed: reuses the saved Vault token in data/sandbox-state.json.
 import fs from 'node:fs';
@@ -35,7 +35,7 @@ const redact = (v) => {
 const report = { startedAt: new Date().toISOString(), steps: [], raw: {} };
 function save() {
   fs.writeFileSync(path.join(LOG_DIR, 'verify3-result.json'), redact(JSON.stringify(report, null, 2)));
-  const lines = [`Chaperone 验证结果（第 3 轮：把钱追回来）  ${new Date().toLocaleString()}`, ''];
+  const lines = [`Minder 验证结果（第 3 轮：把钱追回来）  ${new Date().toLocaleString()}`, ''];
   for (const s of report.steps) lines.push(`${s.ok ? '[通过]' : '[失败]'} ${s.name}：${s.summary}`);
   fs.writeFileSync(path.join(LOG_DIR, '验证结果3.txt'), lines.join('\r\n'));
 }
@@ -90,7 +90,7 @@ async function pay(token, value, description) {
 }
 
 async function main() {
-  console.log('Chaperone 验证程序（第 3 轮：把钱追回来）：开始\n');
+  console.log('Minder 验证程序（第 3 轮：把钱追回来）：开始\n');
   if (!state.vaultId) { record('读取保存的授权', false, '没找到保存的授权，请先运行 4-验证争议.bat'); return; }
   say('正在连接 PayPal');
   const token = await getToken();
@@ -98,11 +98,11 @@ async function main() {
   // A) Agent-to-agent settlement: the merchant refunds part of the payment
   try {
     say('Maya 付 $30（用保存的授权，不用登录）');
-    const a = await pay(token, '30.00', 'Desk lamp from BrightHome (arrived broken) - Chaperone test');
+    const a = await pay(token, '30.00', 'Desk lamp from BrightHome (arrived broken) - Minder test');
     say('商家同意退一半：退款 $15');
     const r = await pp('POST', `/v2/payments/captures/${a.captureId}/refund`, {
       token, headers: { 'PayPal-Request-Id': uuid() },
-      body: { amount: { currency_code: 'USD', value: '15.00' }, note_to_payer: 'Partial refund agreed with your Chaperone agent' },
+      body: { amount: { currency_code: 'USD', value: '15.00' }, note_to_payer: 'Partial refund agreed with your Minder agent' },
     });
     if (r.ok) record('A. 商家退款（谈判后部分退款）', true, `成功：$30 里退回 $15，状态 ${r.json.status}`);
     else record('A. 商家退款（谈判后部分退款）', false, ppErr(r));
@@ -114,7 +114,7 @@ async function main() {
   let disputeId;
   try {
     say('Maya 付 $25（这一单商家收钱不发货）');
-    const b = await pay(token, '25.00', 'Bluetooth speaker from QuickGadgets (never shipped) - Chaperone test');
+    const b = await pay(token, '25.00', 'Bluetooth speaker from QuickGadgets (never shipped) - Minder test');
     report.raw.merchantIdFound = Boolean(b.merchantId);
     await sleep(4000);
     say('向 PayPal 沙盒提交"信用卡拒付"模拟，生成一条争议');
@@ -138,7 +138,7 @@ async function main() {
         money_movement_date: iso(now),
         event_type: 'DEBIT',
         chargeback_type: 'REPORTED_TO_PROCESSOR',
-        processor_info: { reference_number: String(Date.now()) + '123456789', reason_code: '1330', notes: 'Chaperone test: merchandise not received' },
+        processor_info: { reference_number: String(Date.now()) + '123456789', reason_code: '1330', notes: 'Minder test: merchandise not received' },
       },
     };
     const c = await pp('POST', '/v2/customer-support/process-chargeback', { token, body });

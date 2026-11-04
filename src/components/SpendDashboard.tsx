@@ -4,12 +4,12 @@ import { AgStudioAiModule, createAiHarness, type AgReportState, type AgStudioApi
 import { AgStudio, AgStudioProvider } from "ag-studio-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { BudgetRow, DashboardRows } from "@/lib/dashboard-data";
-import { CHEQUE_EVENT, chaperoneHarness } from "./studio/agents";
+import { CHEQUE_EVENT, minderHarness } from "./studio/agents";
 import { buildStudioData } from "./studio/data";
 import { desktopTheme, phoneTheme } from "./studio/theme";
 import { ApprovalCheque, Cheque, PayPalCheckCard, PurchaseFoundCard, WhatIfCard } from "./studio/ToolCards";
 import type { PurchaseRecord } from "@/lib/studio-tools";
-import { chaperoneWidgets, MONEY_FLOW, STORE_TRICKS } from "./studio/widgets";
+import { minderWidgets, MONEY_FLOW, STORE_TRICKS } from "./studio/widgets";
 
 const licenseKey = process.env.NEXT_PUBLIC_AG_STUDIO_LICENSE_KEY;
 
@@ -65,7 +65,7 @@ const panels = { edit: { left: [], right: ["ai", "edit", "data"] as ("ai" | "edi
 // How our agents' tool calls read in the chat panel. The wording describes the work; the cards show the result.
 const aiToolDisplay = {
   look_up_purchase: {
-    label: ({ args }: { args: { query?: string } }) => ({ text: `Looked up ${args.query ? `"${args.query}"` : "a purchase"} in Chaperone's log` }),
+    label: ({ args }: { args: { query?: string } }) => ({ text: `Looked up ${args.query ? `"${args.query}"` : "a purchase"} in Minder's log` }),
     detail: PurchaseFoundCard,
   },
   verify_with_paypal: {
@@ -162,7 +162,7 @@ export default function SpendDashboard({ rows, initialState }: { rows: Dashboard
         <p className="text-sm text-muted">
           {mode === "edit"
             ? "Drag widgets, or ask the AI assistant for a new chart."
-            : `${period ? `Statement for ${period}. ` : ""}Live from Chaperone's purchase log.${phone ? " To customize it with AI, open this page on a larger screen." : ""}`}
+            : `${period ? `Statement for ${period}. ` : ""}Live from Minder's purchase log.${phone ? " To customize it with AI, open this page on a larger screen." : ""}`}
         </p>
         {!phone && (
           <button
@@ -205,18 +205,18 @@ export default function SpendDashboard({ rows, initialState }: { rows: Dashboard
           <AgStudio
             theme={phone ? phoneTheme : desktopTheme}
             data={data}
-            widgets={chaperoneWidgets as never}
+            widgets={minderWidgets as never}
             mode={mode}
             modules={modules}
             panels={panels}
             initialState={layout as never}
             loadThemeGoogleFonts={false}
-            ai={({ api: studio }: { api: AgStudioApi }) => createAiHarness(studio, chaperoneHarness(studio))}
+            ai={({ api: studio }: { api: AgStudioApi }) => createAiHarness(studio, minderHarness(studio))}
             aiToolDisplay={aiToolDisplay as never}
             onApiReady={(e) => {
               api.current = e.api;
               // Exposed so the default layout can be captured during development.
-              (window as unknown as { chaperoneStudio?: AgStudioApi }).chaperoneStudio = e.api;
+              (window as unknown as { minderStudio?: AgStudioApi }).minderStudio = e.api;
             }}
             onStateUpdated={(e: { state: AgReportState }) => {
               setPages(e.state.pages.map((p) => p.id));

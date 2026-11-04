@@ -19,7 +19,7 @@ const RED = "#c0352b";
 const GREY = "#8a94a6";
 const FALLBACK = [INK, SLATE, GREY, AMBER, GREEN, "#3d6a5f", "#7a5c2e"];
 
-// Chaperone's own stage values, in the order that keeps ribbons from crossing: what stayed with the
+// Minder's own stage values, in the order that keeps ribbons from crossing: what stayed with the
 // owner on top, what reached a store at the bottom.
 const ORDER = [
   "ShopBot asked to pay",

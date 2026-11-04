@@ -1,4 +1,4 @@
-// Chaperone feasibility check.
+// Minder feasibility check.
 // Runs on the user's computer (it needs to reach PayPal sandbox and Gemini).
 // Tests: PayPal auth, Gemini, Vault (save PayPal once), Authorize/Void/Capture, sandbox dispute creation.
 // Writes a secret-free report to logs/verify-result.json and logs/验证结果.txt.
@@ -53,7 +53,7 @@ function record(name, ok, summary, detail) {
 }
 function save() {
   fs.writeFileSync(path.join(LOG_DIR, 'verify-result.json'), redact(JSON.stringify(report, null, 2)));
-  const lines = [`Chaperone 验证结果  ${new Date().toLocaleString()}`, `Node.js ${report.node}`, ''];
+  const lines = [`Minder 验证结果  ${new Date().toLocaleString()}`, `Node.js ${report.node}`, ''];
   for (const s of report.steps) lines.push(`${s.ok ? '[通过]' : '[失败]'} ${s.name}：${s.summary}`);
   fs.writeFileSync(path.join(LOG_DIR, '验证结果.txt'), lines.join('\r\n'));
 }
@@ -96,7 +96,7 @@ const server = http.createServer((req, res) => {
     resolveReturn({ approved: false, query: Object.fromEntries(u.searchParams) });
     res.end(page('已取消授权', '<p>可以关掉这个网页，回到黑色窗口。</p>'));
   } else {
-    res.end(page('Chaperone 验证程序', '<p>正在运行，请看黑色窗口。</p>'));
+    res.end(page('Minder 验证程序', '<p>正在运行，请看黑色窗口。</p>'));
   }
 });
 
@@ -107,7 +107,7 @@ function openBrowser(url) {
 
 // ---------- tests ----------
 async function main() {
-  console.log('Chaperone 验证程序：开始\n');
+  console.log('Minder 验证程序：开始\n');
 
   const missing = ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_BUYER_EMAIL', 'GEMINI_API_KEY'].filter((k) => !env[k]);
   if (missing.length) {
@@ -184,13 +184,13 @@ async function main() {
       body: {
         payment_source: {
           paypal: {
-            description: 'Chaperone: let your AI shopping agent pay with PayPal, under your rules',
+            description: 'Minder: let your AI shopping agent pay with PayPal, under your rules',
             permit_multiple_payment_tokens: false,
             usage_pattern: 'IMMEDIATE',
             usage_type: 'MERCHANT',
             customer_type: 'CONSUMER',
             experience_context: {
-              brand_name: 'Chaperone',
+              brand_name: 'Minder',
               locale: 'en-US',
               shipping_preference: 'NO_SHIPPING',
               return_url: `http://localhost:${PORT}/return`,
@@ -259,7 +259,7 @@ async function main() {
 
   let captureId;
   try {
-    const held = await authorizeOrder('129.00', 'Wireless headphones (birthday gift) - Chaperone test');
+    const held = await authorizeOrder('129.00', 'Wireless headphones (birthday gift) - Minder test');
     if (held.error) record('授权冻结 → 释放', false, held.error, held.raw);
     else {
       const v = await pp('POST', `/v2/payments/authorizations/${held.authId}/void`, { token, headers: { 'PayPal-Request-Id': uuid() } });
@@ -267,7 +267,7 @@ async function main() {
       else record('授权冻结 → 释放', false, `冻结成功但释放失败：${ppErr(v)}`, v.json);
     }
 
-    const held2 = await authorizeOrder('18.00', 'Coffee beans 1kg - Chaperone test');
+    const held2 = await authorizeOrder('18.00', 'Coffee beans 1kg - Minder test');
     if (held2.error) record('授权冻结 → 正式扣款', false, held2.error, held2.raw);
     else {
       const c = await pp('POST', `/v2/payments/authorizations/${held2.authId}/capture`, { token, headers: { 'PayPal-Request-Id': uuid() }, body: { final_capture: true } });

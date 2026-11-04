@@ -63,7 +63,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
       )}
 
       <details className="text-sm text-muted">
-        <summary className="cursor-pointer">Every check Chaperone ran before paying</summary>
+        <summary className="cursor-pointer">Every check Minder ran before paying</summary>
         <ul className="mt-2 space-y-1">
           {p.rules.checks.map((c, n) => (
             <li key={n}>

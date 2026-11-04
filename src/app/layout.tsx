@@ -4,7 +4,7 @@ import { NavLinks } from "@/components/NavLinks";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Chaperone",
+  title: "Minder",
   description: "A PayPal-powered bodyguard for your AI shopping agent.",
 };
 
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" />
                 <path d="M9 12l2 2 4-4" />
               </svg>
-              <span className="text-lg font-semibold tracking-tight">Chaperone</span>
+              <span className="text-lg font-semibold tracking-tight">Minder</span>
             </Link>
             <NavLinks />
           </div>

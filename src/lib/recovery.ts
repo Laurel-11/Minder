@@ -1,4 +1,4 @@
-// Getting money back: claim -> the store's agent -> Chaperone's advice -> owner decides -> PayPal refund or dispute. Then learn: optionally block the store.
+// Getting money back: claim -> the store's agent -> Minder's advice -> owner decides -> PayPal refund or dispute. Then learn: optionally block the store.
 import crypto from "node:crypto";
 import { demoNow } from "./clock";
 import { readDb, updateDb } from "./db";
@@ -51,7 +51,7 @@ export async function openCase(purchaseId: string, problem: CaseProblem, openedB
     timeline,
     askFor,
     messages: [
-      { from: "chaperone", at: now.toISOString(), text: claim, offer: askFor },
+      { from: "minder", at: now.toISOString(), text: claim, offer: askFor },
       { from: "merchant", at: now.toISOString(), text: reply.text, offer: reply.offer },
     ],
     status: "offer_to_review",
@@ -64,7 +64,7 @@ export async function openCase(purchaseId: string, problem: CaseProblem, openedB
   return c;
 }
 
-/** Chaperone's watchdog: open a case by itself when a paid order is past its ship-by date. */
+/** Minder's watchdog: open a case by itself when a paid order is past its ship-by date. */
 export async function checkDeliveries(): Promise<number> {
   const db = await readDb();
   const now = demoNow(db);
@@ -73,7 +73,7 @@ export async function checkDeliveries(): Promise<number> {
   );
   for (const p of late) {
     try {
-      await openCase(p.id, "not_delivered", "chaperone");
+      await openCase(p.id, "not_delivered", "minder");
     } catch (e) {
       log("case.auto_open_failed", { id: p.id, error: (e as Error).message });
     }
@@ -93,7 +93,7 @@ export async function resolveCase(caseId: string, action: "accept" | "escalate")
   const messages = [...c.messages];
 
   if (action === "accept" && offer && offer.kind !== "none") {
-    const r = await refundCapture(p.paypal.captureId!, { currency_code: "USD", value: toValue(offer.amount) }, `Refund from ${p.request.merchant.name}, agreed with your Chaperone agent`);
+    const r = await refundCapture(p.paypal.captureId!, { currency_code: "USD", value: toValue(offer.amount) }, `Refund from ${p.request.merchant.name}, agreed with your Minder agent`);
     patch.refund = { refundId: r.refundId, amount: offer.amount, status: r.status };
     patch.status = "refunded";
     messages.push({ from: "owner", at: now, text: `You accepted ${usd(offer.amount)}.` });
@@ -104,7 +104,7 @@ export async function resolveCase(caseId: string, action: "accept" | "escalate")
     if (!disputeId) throw new PurchaseError("PayPal did not return a dispute ID.", 502);
     patch.dispute = { disputeId, status: "OPEN", updatedAt: now };
     patch.status = "escalated";
-    messages.push({ from: "owner", at: now, text: "You asked Chaperone to escalate to PayPal." });
+    messages.push({ from: "owner", at: now, text: "You asked Minder to escalate to PayPal." });
     messages.push({ from: "paypal", at: now, text: `PayPal opened case ${disputeId} for ${usd(p.total)} and asked ${p.request.merchant.name} to respond.` });
   }
   patch.messages = messages;

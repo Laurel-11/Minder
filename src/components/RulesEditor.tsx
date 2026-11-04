@@ -53,13 +53,13 @@ export function RulesEditor({ initialText, initialPolicy }: { initialText?: stri
         >
           {busy ? "Reading your rules…" : "Save rules"}
         </button>
-        {saved && <span className="text-sm text-approve">Saved. Chaperone enforces these from the next purchase.</span>}
+        {saved && <span className="text-sm text-approve">Saved. Minder enforces these from the next purchase.</span>}
       </div>
       {error && <p className="text-sm text-block">{error}</p>}
 
       {policy && (
         <section className="rounded-lg border border-line bg-paper p-5">
-          <h2 className="font-semibold">How Chaperone reads them</h2>
+          <h2 className="font-semibold">How Minder reads them</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
             {policy.explanation.map((line, n) => (
               <li key={n}>{line}</li>

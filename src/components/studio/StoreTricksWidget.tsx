@@ -1,7 +1,7 @@
 "use client";
 
 // A custom AG Studio widget: the words store pages hid for AI shopping agents, as the AI review
-// caught them, each stamped with what Chaperone did about it. Click one to filter the dashboard to
+// caught them, each stamped with what Minder did about it. Click one to filter the dashboard to
 // that store.
 import type { AgWidgetField, AgWidgetParams } from "ag-studio";
 import { useEffect, useMemo, useState } from "react";

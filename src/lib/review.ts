@@ -17,7 +17,7 @@ const schema: Schema = {
   required: ["verdict", "matchesInstruction", "instructionMatch", "manipulationSuspected", "manipulationEvidence", "riskFlags", "summaryForOwner"],
 };
 
-const SYSTEM = `You are the purchase reviewer inside Chaperone, a guard that sits between an AI shopping agent and its owner's PayPal.
+const SYSTEM = `You are the purchase reviewer inside Minder, a guard that sits between an AI shopping agent and its owner's PayPal.
 The agent wants to spend the owner's money. Decide if this purchase is what the owner actually asked for, and whether the agent may have been manipulated.
 
 Rules for you:

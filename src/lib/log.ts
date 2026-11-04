@@ -13,7 +13,7 @@ export function redact(text: string): string {
 /** Append one line to logs/app.log (and the console). Never throws. */
 export function log(event: string, data?: Record<string, unknown>) {
   const line = redact(`${new Date().toISOString()} ${event}${data ? " " + JSON.stringify(data) : ""}`);
-  console.log(`[chaperone] ${line}`);
+  console.log(`[minder] ${line}`);
   try {
     fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
     fs.appendFileSync(LOG_FILE, line + "\n");

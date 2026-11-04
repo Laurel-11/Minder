@@ -32,7 +32,7 @@ export function BlockStore({ caseId, storeName, problem, blocked }: { caseId: st
     return (
       <div className="border-t border-line pt-4 text-sm">
         <p>
-          <span className="font-medium">{storeName} is blocked.</span> Chaperone will refuse every payment to it, even if a store page talks your agent
+          <span className="font-medium">{storeName} is blocked.</span> Minder will refuse every payment to it, even if a store page talks your agent
           into trying.
         </p>
         <Link href="/rules" className="mt-1 inline-block underline underline-offset-2">
@@ -47,7 +47,7 @@ export function BlockStore({ caseId, storeName, problem, blocked }: { caseId: st
       <p>
         <span className="font-medium">Stop paying {storeName}? </span>
         {problem === "not_delivered" ? `${storeName} took your money and never shipped.` : `Your order from ${storeName} arrived damaged.`} Block it, and
-        Chaperone will refuse every future payment to it.
+        Minder will refuse every future payment to it.
       </p>
       <div>
         <button onClick={block} disabled={busy} className="rounded-lg border-2 border-ink px-4 py-2 text-sm font-medium disabled:opacity-50">

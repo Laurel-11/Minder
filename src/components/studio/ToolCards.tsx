@@ -1,6 +1,6 @@
 "use client";
 
-// How Chaperone's own agent tools look in AG Studio's chat panel: a purchase slip, a side-by-side
+// How Minder's own agent tools look in AG Studio's chat panel: a purchase slip, a side-by-side
 // check against PayPal's records, a what-if table, and a cheque the owner signs. Money only moves
 // when the owner presses the button on the cheque; the agents can only prepare it.
 import type { AgAiToolDetailParams } from "ag-studio";
@@ -51,7 +51,7 @@ export function PayPalCheckCard(p: AgAiToolDetailParams) {
           <thead>
             <tr className="text-muted">
               <th className="pb-1 font-normal">Check</th>
-              <th className="pb-1 font-normal">Chaperone</th>
+              <th className="pb-1 font-normal">Minder</th>
               <th className="pb-1 font-normal">PayPal</th>
             </tr>
           </thead>
@@ -59,7 +59,7 @@ export function PayPalCheckCard(p: AgAiToolDetailParams) {
             {v.checks.map((c) => (
               <tr key={c.label} className="border-t border-[#eceff3] align-top">
                 <td className="py-1 pr-2">{c.label}</td>
-                <td className="py-1 pr-2">{c.chaperone}</td>
+                <td className="py-1 pr-2">{c.minder}</td>
                 <td className={`py-1 ${c.match ? "text-approve" : "font-semibold text-block"}`}>
                   {c.match ? "✓ " : "✗ "}
                   {c.paypal}

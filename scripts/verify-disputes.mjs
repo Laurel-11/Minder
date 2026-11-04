@@ -1,4 +1,4 @@
-// Chaperone feasibility check #2: Gemini 3.8 + alternative ways to open a sandbox dispute.
+// Minder feasibility check #2: Gemini 3.8 + alternative ways to open a sandbox dispute.
 // Run on the user's computer. Writes a secret-free report to logs/verify2-result.json and logs/验证结果2.txt.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -43,7 +43,7 @@ const saveState = () => fs.writeFileSync(STATE_FILE, JSON.stringify(state, null,
 const report = { startedAt: new Date().toISOString(), node: process.version, steps: [], attempts: [] };
 function save() {
   fs.writeFileSync(path.join(LOG_DIR, 'verify2-result.json'), redact(JSON.stringify(report, null, 2)));
-  const lines = [`Chaperone 验证结果（第 2 轮）  ${new Date().toLocaleString()}`, ''];
+  const lines = [`Minder 验证结果（第 2 轮）  ${new Date().toLocaleString()}`, ''];
   for (const s of report.steps) lines.push(`${s.ok ? '[通过]' : '[失败]'} ${s.name}：${s.summary}`);
   fs.writeFileSync(path.join(LOG_DIR, '验证结果2.txt'), lines.join('\r\n'));
 }
@@ -91,7 +91,7 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   if (u.pathname === '/return') { resolveReturn(true); res.end(page('授权成功', '<p>测试正在继续，结果会显示在黑色窗口里。现在可以关掉这个网页。</p>')); }
   else if (u.pathname === '/cancel') { resolveReturn(false); res.end(page('已取消', '<p>可以关掉这个网页。</p>')); }
-  else res.end(page('Chaperone 验证程序', '<p>正在运行，请看黑色窗口。</p>'));
+  else res.end(page('Minder 验证程序', '<p>正在运行，请看黑色窗口。</p>'));
 });
 const openBrowser = (url) => exec(process.platform === 'win32' ? `start "" "${url}"` : `xdg-open "${url}"`, () => {});
 
@@ -113,9 +113,9 @@ async function ensureVault(token) {
     token,
     headers: { 'PayPal-Request-Id': uuid() },
     body: { payment_source: { paypal: {
-      description: 'Chaperone: let your AI shopping agent pay with PayPal, under your rules',
+      description: 'Minder: let your AI shopping agent pay with PayPal, under your rules',
       permit_multiple_payment_tokens: false, usage_pattern: 'IMMEDIATE', usage_type: 'MERCHANT', customer_type: 'CONSUMER',
-      experience_context: { brand_name: 'Chaperone', locale: 'en-US', shipping_preference: 'NO_SHIPPING',
+      experience_context: { brand_name: 'Minder', locale: 'en-US', shipping_preference: 'NO_SHIPPING',
         return_url: `http://localhost:${PORT}/return`, cancel_url: `http://localhost:${PORT}/cancel` },
     } } },
   });
@@ -154,7 +154,7 @@ async function payWithVault(token, vaultId, value, description) {
 }
 
 async function main() {
-  console.log('Chaperone 验证程序（第 2 轮）：开始\n');
+  console.log('Minder 验证程序（第 2 轮）：开始\n');
 
   // 1. A fresh captured payment from Maya
   say('正在连接 PayPal');
@@ -163,7 +163,7 @@ async function main() {
   let pay;
   try {
     const vaultId = await ensureVault(token);
-    pay = await payWithVault(token, vaultId, '25.00', 'Bluetooth speaker from QuickGadgets (never shipped) - Chaperone test');
+    pay = await payWithVault(token, vaultId, '25.00', 'Bluetooth speaker from QuickGadgets (never shipped) - Minder test');
     state.lastCaptureId = pay.captureId;
     saveState();
     record('用保存的授权付款', true, `成功：直接扣款 $25，没有再让 Maya 登录（状态 ${pay.captureStatus}）`);

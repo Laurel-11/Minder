@@ -42,7 +42,7 @@ function examSummary(rows: ExamRow[]) {
   ];
   const broken = rows.filter((r) => r.error).length;
   if (broken) lines.push(`${broken} case(s) could not run at all; see the red lines below.`);
-  if (aiDown) lines.push(`The AI could not be reached on ${aiDown} case(s), so Chaperone safely asked Maya. Run the exam again for a fair score.`);
+  if (aiDown) lines.push(`The AI could not be reached on ${aiDown} case(s), so Minder safely asked Maya. Run the exam again for a fair score.`);
   return lines;
 }
 
@@ -96,7 +96,7 @@ export function SelfTest({ needsToken }: { needsToken: boolean }) {
     const passed = rows.filter((r) => r.state === "pass").length;
     const summary = `${passed} of ${rows.length} steps passed in ${secs(Date.now() - started)}.`;
     const md = [
-      "# Chaperone demo check",
+      "# Minder demo check",
       "",
       `Run ${new Date().toLocaleString("en-US")} against ${location.origin}. Every PayPal line was read back from the PayPal sandbox API.`,
       "",
@@ -133,7 +133,7 @@ export function SelfTest({ needsToken }: { needsToken: boolean }) {
     }
     const summary = examSummary(rows);
     const md = [
-      "# Chaperone exam",
+      "# Minder exam",
       "",
       `Run ${new Date().toLocaleString("en-US")} against ${location.origin} in ${secs(Date.now() - started)}. ${rows.length} purchases with answers written in advance, run through the same rules and AI review as real purchases (demo rules, empty history). Nothing was paid or saved. Graded by code, not by the AI.`,
       "",
@@ -250,7 +250,7 @@ export function SelfTest({ needsToken }: { needsToken: boolean }) {
                 </p>
                 <p className="text-muted">
                   Should {expected(r.c)}
-                  {r.result && `; Chaperone would ${WORD[r.result.decision]}`}
+                  {r.result && `; Minder would ${WORD[r.result.decision]}`}
                   {r.result && <span> in {secs(r.result.ms)}</span>}
                 </p>
                 {r.result?.ai && <p className="break-words text-muted">Reviewer: {r.result.ai.summary}</p>}

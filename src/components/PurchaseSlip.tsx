@@ -4,7 +4,7 @@ import { usd } from "@/lib/money";
 import type { Purchase, PurchaseStatus } from "@/lib/types";
 import { VerdictStamp } from "./VerdictStamp";
 
-/** The foot of the slip, where a cheque gets signed: by Chaperone, by the owner, or by nobody. */
+/** The foot of the slip, where a cheque gets signed: by Minder, by the owner, or by nobody. */
 function SignatureLine({ status, owner }: { status: PurchaseStatus; owner: string }) {
   const signed = (name: string, text: string) => (
     <p className="flex flex-wrap items-baseline gap-x-3">
@@ -14,7 +14,7 @@ function SignatureLine({ status, owner }: { status: PurchaseStatus; owner: strin
   );
   switch (status) {
     case "paid":
-      return signed("Chaperone", "Signed and paid with PayPal.");
+      return signed("Minder", "Signed and paid with PayPal.");
     case "approved_by_owner":
       return signed(owner, "Signed by you and paid with PayPal.");
     case "awaiting_owner":
@@ -27,7 +27,7 @@ function SignatureLine({ status, owner }: { status: PurchaseStatus; owner: strin
         </p>
       );
     case "blocked":
-      return <p className="text-sm text-muted">Chaperone refused to sign. No money moved.</p>;
+      return <p className="text-sm text-muted">Minder refused to sign. No money moved.</p>;
     case "declined_by_owner":
       return <p className="text-sm text-muted">You declined. PayPal released the hold.</p>;
     default:

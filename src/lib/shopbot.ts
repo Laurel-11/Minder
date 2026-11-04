@@ -1,5 +1,5 @@
-// ShopBot: a deliberately naive demo shopping agent. It shops the demo stores and asks Chaperone for
-// permission to pay through Chaperone's public agent API, exactly like a third-party agent would.
+// ShopBot: a deliberately naive demo shopping agent. It shops the demo stores and asks Minder for
+// permission to pay through Minder's public agent API, exactly like a third-party agent would.
 import { generateJson, type Schema } from "./ai";
 import { findProduct, productPageText, STORES } from "./catalog";
 import { env } from "./env";
@@ -7,7 +7,7 @@ import { fetchWithTimeout } from "./http";
 import { log } from "./log";
 import type { Outcome, PurchaseRequest, PurchaseStatus } from "./types";
 
-export type ChaperoneReply = {
+export type MinderReply = {
   purchaseId?: string;
   decision?: Outcome;
   status?: PurchaseStatus;
@@ -22,7 +22,7 @@ export type ShopBotRun = {
   steps: string[];
   agentMessage: string;
   order?: { storeName: string; items: { name: string; quantity: number; price: number }[]; total: number };
-  chaperone?: ChaperoneReply;
+  minder?: MinderReply;
 };
 
 type AgentPlan = {
@@ -116,17 +116,17 @@ export async function runShopBot(ownerRequest: string): Promise<ShopBotRun> {
     pageExcerpt: lines.map((l) => productPageText(l.hit!.product)).join("\n"),
   };
 
-  run.steps.push("Asking Chaperone for permission to pay");
+  run.steps.push("Asking Minder for permission to pay");
   try {
     const res = await fetchWithTimeout(
       `${env.appUrl}/api/agent/purchase`,
       { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(purchase) },
       90_000,
     );
-    run.chaperone = (await res.json()) as ChaperoneReply;
+    run.minder = (await res.json()) as MinderReply;
   } catch (e) {
-    run.chaperone = { error: (e as Error).message };
+    run.minder = { error: (e as Error).message };
   }
-  log("shopbot.run", { store: store.slug, items: purchase.items.length, decision: run.chaperone?.decision ?? run.chaperone?.error });
+  log("shopbot.run", { store: store.slug, items: purchase.items.length, decision: run.minder?.decision ?? run.minder?.error });
   return run;
 }

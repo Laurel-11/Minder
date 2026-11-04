@@ -3,7 +3,7 @@ import { checkDeliveries } from "@/lib/recovery";
 
 export const dynamic = "force-dynamic";
 
-/** Demo time travel: jump ahead so late deliveries show up, then let Chaperone's watchdog run. */
+/** Demo time travel: jump ahead so late deliveries show up, then let Minder's watchdog run. */
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { addDays?: number; reset?: boolean };
   const days = await updateDb((db) => {

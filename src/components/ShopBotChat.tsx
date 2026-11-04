@@ -12,7 +12,7 @@ const SUGGESTIONS = [
   "Find a birthday gift for my mom. She loves music. Around $100 to $150.",
 ];
 
-const PROGRESS = ["Reading the demo stores", "Choosing products", "Asking Chaperone for permission to pay", "Waiting for Chaperone's decision"];
+const PROGRESS = ["Reading the demo stores", "Choosing products", "Asking Minder for permission to pay", "Waiting for Minder's decision"];
 
 type Turn = { request: string; run?: ShopBotRun; error?: string };
 
@@ -63,7 +63,7 @@ export function ShopBotChat() {
         <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-[#5b4bc4] text-sm font-semibold text-paper">SB</span>
         <div>
           <p className="font-semibold leading-tight">ShopBot</p>
-          <p className="text-xs text-muted">Demo shopping agent. It pays through Chaperone.</p>
+          <p className="text-xs text-muted">Demo shopping agent. It pays through Minder.</p>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export function ShopBotChat() {
 }
 
 function AgentReply({ run }: { run: ShopBotRun }) {
-  const c = run.chaperone;
+  const c = run.minder;
   return (
     <div className="flex flex-col gap-3 self-start sm:max-w-[85%]">
       <div className="rounded-2xl rounded-bl-sm bg-[#f4f2fb] px-4 py-3 text-sm">
@@ -146,7 +146,7 @@ function AgentReply({ run }: { run: ShopBotRun }) {
       {c && (
         <div className="rounded-lg border border-line px-4 py-3 text-sm">
           <div className="flex items-center justify-between gap-3">
-            <p className="font-semibold">Chaperone</p>
+            <p className="font-semibold">Minder</p>
             {c.status && <VerdictStamp status={c.status} animate />}
           </div>
           {c.error && <p className="mt-2 text-block">{c.error}</p>}

@@ -1,5 +1,5 @@
 // Stand-ins for each demo store's customer-service agent. Scripted on purpose: the store side is a prop,
-// and keeping it deterministic saves the AI quota for Chaperone's own reasoning.
+// and keeping it deterministic saves the AI quota for Minder's own reasoning.
 import { findStoreByName } from "./catalog";
 import { usd } from "./money";
 import type { CaseProblem, Offer, Purchase } from "./types";

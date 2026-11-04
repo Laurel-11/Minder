@@ -1,7 +1,7 @@
-// Thin client for the PayPal REST APIs Chaperone uses (sandbox only): orders, vault, payments, tracking, disputes, lookups.
+// Thin client for the PayPal REST APIs Minder uses (sandbox only): orders, vault, payments, tracking, disputes, lookups.
 import crypto from "node:crypto";
 import { env } from "./env";
-import { fetchWithTimeout } from "./http";
+import { fetchWithTimeout, sleep } from "./http";
 import { log } from "./log";
 import type { Money } from "./types";
 
@@ -40,33 +40,55 @@ function describe(status: number, body: unknown): string {
   return [`PayPal ${status}`, b.name, issue, b.details?.[0]?.description ?? b.message].filter(Boolean).join(" · ");
 }
 
-async function call<T = Json>(method: string, path: string, opts: { body?: unknown; idempotent?: boolean } = {}): Promise<T> {
-  const token = await getAccessToken();
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-  if (opts.idempotent) headers["PayPal-Request-Id"] = crypto.randomUUID();
-  const res = await fetchWithTimeout(BASE + path, {
-    method,
-    headers,
-    body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
-  });
-  const text = await res.text();
-  let json: unknown = null;
-  try {
-    json = text ? JSON.parse(text) : null;
-  } catch {
-    json = text;
+/** PayPal answers these when a retry is safe: busy, rate limited, or still working on the same request. */
+const retryable = (status: number, body: unknown) =>
+  status === 429 || status >= 500 || (status === 409 && JSON.stringify(body ?? "").includes("PREVIOUS_REQUEST_IN_PROGRESS"));
+
+/**
+ * One PayPal call. Writes carry a PayPal-Request-Id: pass a key derived from what is being done
+ * (e.g. "<authorization id>:capture"), so the same action can never run twice, whether we retry it
+ * here after a timeout or the owner double-clicks. Busy answers are retried with the same key.
+ */
+async function call<T = Json>(method: string, path: string, opts: { body?: unknown; idempotent?: boolean | string } = {}): Promise<T> {
+  const requestId = typeof opts.idempotent === "string" ? opts.idempotent : opts.idempotent ? crypto.randomUUID() : undefined;
+  for (let attempt = 1; ; attempt++) {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+    if (requestId) headers["PayPal-Request-Id"] = requestId;
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(BASE + path, { method, headers, body: opts.body === undefined ? undefined : JSON.stringify(opts.body) });
+    } catch (e) {
+      // A timeout may have reached PayPal: only a request with a stable key can safely go again.
+      if ((method === "GET" || requestId) && attempt < 4) {
+        await sleep(1000 * 2 ** (attempt - 1));
+        continue;
+      }
+      throw e;
+    }
+    const text = await res.text();
+    let json: unknown = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = text;
+    }
+    const debugId = res.headers.get("paypal-debug-id");
+    if (!res.ok) {
+      const message = describe(res.status, json);
+      log("paypal.error", { method, path: path.split("?")[0], status: res.status, debugId, message, attempt });
+      if (retryable(res.status, json) && (method === "GET" || requestId) && attempt < 4) {
+        await sleep(1000 * 2 ** (attempt - 1));
+        continue;
+      }
+      throw new PayPalError(message, res.status, json, debugId);
+    }
+    log("paypal.ok", { method, path: path.split("?")[0], status: res.status, ...(attempt > 1 && { attempt }) });
+    return json as T;
   }
-  const debugId = res.headers.get("paypal-debug-id");
-  if (!res.ok) {
-    const message = describe(res.status, json);
-    log("paypal.error", { method, path: path.split("?")[0], status: res.status, debugId, message });
-    throw new PayPalError(message, res.status, json, debugId);
-  }
-  log("paypal.ok", { method, path: path.split("?")[0], status: res.status });
-  return json as T;
 }
 
-// ---------- Vault: Maya approves once, Chaperone can pay later ----------
+// ---------- Vault: Maya approves once, Minder can pay later ----------
 
 export async function createVaultSetupToken(returnUrl: string, cancelUrl: string) {
   const r = await call<{ id: string; links: Link[] }>("POST", "/v3/vault/setup-tokens", {
@@ -74,13 +96,13 @@ export async function createVaultSetupToken(returnUrl: string, cancelUrl: string
     body: {
       payment_source: {
         paypal: {
-          description: "Chaperone: let your AI shopping agent pay with PayPal, under your rules",
+          description: "Minder: let your AI shopping agent pay with PayPal, under your rules",
           permit_multiple_payment_tokens: false,
           usage_pattern: "IMMEDIATE",
           usage_type: "MERCHANT",
           customer_type: "CONSUMER",
           experience_context: {
-            brand_name: "Chaperone",
+            brand_name: "Minder",
             locale: "en-US",
             shipping_preference: "NO_SHIPPING",
             return_url: returnUrl,
@@ -97,7 +119,7 @@ export async function createVaultSetupToken(returnUrl: string, cancelUrl: string
 
 export async function createPaymentToken(setupTokenId: string) {
   const r = await call<{ id: string; customer?: { id: string } }>("POST", "/v3/vault/payment-tokens", {
-    idempotent: true,
+    idempotent: `${setupTokenId}:payment-token`,
     body: { payment_source: { token: { id: setupTokenId, type: "SETUP_TOKEN" } } },
   });
   return { vaultId: r.id, customerId: r.customer?.id };
@@ -135,7 +157,7 @@ export async function createVaultedOrder(input: {
   referenceId?: string;
 }): Promise<VaultedOrderResult> {
   let order = await call<OrderResponse>("POST", "/v2/checkout/orders", {
-    idempotent: true,
+    idempotent: input.referenceId ? `${input.referenceId}:order` : true,
     body: {
       intent: input.intent,
       purchase_units: [
@@ -150,7 +172,7 @@ export async function createVaultedOrder(input: {
   });
   let payments = order.purchase_units?.[0]?.payments;
   if (input.intent === "AUTHORIZE" && !payments?.authorizations?.length) {
-    order = await call<OrderResponse>("POST", `/v2/checkout/orders/${order.id}/authorize`, { idempotent: true, body: {} });
+    order = await call<OrderResponse>("POST", `/v2/checkout/orders/${order.id}/authorize`, { idempotent: `${order.id}:authorize`, body: {} });
     payments = order.purchase_units?.[0]?.payments;
   }
   return {
@@ -163,19 +185,19 @@ export async function createVaultedOrder(input: {
 
 export async function captureAuthorization(authorizationId: string) {
   const r = await call<{ id: string; status: string }>("POST", `/v2/payments/authorizations/${authorizationId}/capture`, {
-    idempotent: true,
+    idempotent: `${authorizationId}:capture`,
     body: { final_capture: true },
   });
   return { captureId: r.id, status: r.status };
 }
 
 export async function voidAuthorization(authorizationId: string) {
-  await call("POST", `/v2/payments/authorizations/${authorizationId}/void`, { idempotent: true });
+  await call("POST", `/v2/payments/authorizations/${authorizationId}/void`, { idempotent: `${authorizationId}:void` });
 }
 
 export async function refundCapture(captureId: string, amount: Money, noteToPayer: string) {
   const r = await call<{ id: string; status: string }>("POST", `/v2/payments/captures/${captureId}/refund`, {
-    idempotent: true,
+    idempotent: `${captureId}:refund:${amount.value}`,
     body: { amount, note_to_payer: noteToPayer.slice(0, 255) },
   });
   return { refundId: r.id, status: r.status };
@@ -191,7 +213,7 @@ export const getRefund = (refundId: string) => call<Json>("GET", `/v2/payments/r
 /** Register a shipment's tracking number on the PayPal order, so PayPal (and Buyer Protection) can see it. */
 export async function addTracking(input: { orderId: string; captureId: string; trackingNumber: string; carrier: string }) {
   await call("POST", `/v2/checkout/orders/${input.orderId}/track`, {
-    idempotent: true,
+    idempotent: `${input.orderId}:track:${input.trackingNumber}`,
     body: { capture_id: input.captureId, tracking_number: input.trackingNumber, carrier: input.carrier, notify_payer: false },
   });
 }

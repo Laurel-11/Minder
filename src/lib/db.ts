@@ -1,4 +1,4 @@
-// Tiny JSON-file store (data/chaperone-db.json). Good enough for a single-user demo.
+// Tiny JSON-file store (data/minder-db.json). Good enough for a single-user demo.
 import fs from "node:fs/promises";
 import path from "node:path";
 import { env } from "./env";
@@ -6,7 +6,7 @@ import { freshDb } from "./seed";
 import type { Db, VaultInfo } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
-const DB_FILE = path.join(DATA_DIR, "chaperone-db.json");
+const DB_FILE = path.join(DATA_DIR, "minder-db.json");
 // Written by the feasibility scripts in /scripts; lets us reuse Maya's saved PayPal approval.
 const LEGACY_STATE = path.join(DATA_DIR, "sandbox-state.json");
 

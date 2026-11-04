@@ -1,7 +1,7 @@
-// Chaperone's look for AG Studio: the dashboard should read as part of the product, not as an embed.
+// Minder's look for AG Studio: the dashboard should read as part of the product, not as an embed.
 import { studioTheme } from "ag-studio";
 
-// Chaperone's palette and type, so the dashboard reads as part of the product.
+// Minder's palette and type, so the dashboard reads as part of the product.
 const themeParams = {
   fontFamily: "Plex, 'Segoe UI', system-ui, sans-serif",
   studioCanvasFontFamily: "Plex, 'Segoe UI', system-ui, sans-serif",
@@ -47,7 +47,7 @@ const themeParams = {
   gridWrapperBorder: false,
   gridRowHeight: 38,
   gridCellHorizontalPadding: 10,
-  // Chaperone's verdict colours first (the "decisions" table always lists Approved, Asked you, Blocked in that order), then quiet neutrals.
+  // Minder's verdict colours first (the "decisions" table always lists Approved, Asked you, Blocked in that order), then quiet neutrals.
   chartPaletteFills1Color: "#1d7a4e",
   chartPaletteFills2Color: "#a9620a",
   chartPaletteFills3Color: "#c0352b",

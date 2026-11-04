@@ -111,7 +111,7 @@ export type CaseProblem = "not_delivered" | "damaged";
 export type Offer = { kind: "full_refund" | "partial_refund" | "none"; amount: number };
 
 export type CaseMessage = {
-  from: "chaperone" | "merchant" | "paypal" | "owner";
+  from: "minder" | "merchant" | "paypal" | "owner";
   at: string;
   text: string;
   offer?: Offer;
@@ -122,7 +122,7 @@ export type RecoveryCase = {
   purchaseId: string;
   createdAt: string;
   problem: CaseProblem;
-  openedBy: "chaperone" | "owner";
+  openedBy: "minder" | "owner";
   ownerNote?: string;
   timeline: { at: string; event: string }[];
   askFor: Offer;
