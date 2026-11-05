@@ -39,16 +39,16 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const deskSlips = slipsForDesk(db);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="relative left-1/2 flex w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-12 lg:gap-16">
       {banner && <p className={`rounded-lg px-4 py-3 text-sm ${banner.tone}`}>{banner.text}</p>}
 
-      <section className="relative left-1/2 w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2 overflow-x-clip">
+      <section className="overflow-x-clip lg:overflow-visible">
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
           <div>
             <h1 className="font-display text-[2.35rem] font-medium leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.35rem]">
               Buyer protection for the purchases your AI agent makes.
             </h1>
-            <p className="mt-5 max-w-[34rem] text-[17px] leading-relaxed text-muted">
+            <p className="mt-5 max-w-[34rem] text-base leading-relaxed text-muted sm:text-[17px]">
               PayPal protects you when an order never arrives or is not as described. But when a store page talks your agent into buying something you never asked
               for, the order arrives exactly as described, so that protection may not help. Minder checks every purchase before the money moves, and files the
               claims PayPal does cover when an order goes wrong.
@@ -67,7 +67,9 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
       </section>
 
       {db.purchases.length > 0 && (
-        <section className="flex flex-col gap-5">
+        <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12">
+          <div className="flex flex-col gap-5">
+          <h2 className="font-display text-2xl font-medium tracking-tight">Maya&apos;s week</h2>
           <p className="max-w-prose text-[15px] leading-relaxed">
             Without Minder, ShopBot would have paid <strong className="tabular-nums">{usd(ww.withoutMinder)}</strong> of Maya&apos;s money
             {ww.tricked > 0 && (
@@ -84,17 +86,6 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
             )}
             .
           </p>
-          <div className="rounded-lg border border-line bg-paper p-4 sm:p-5">
-            <MoneySplit
-              title={`Where the ${usd(ww.withoutMinder)} ShopBot asked to spend went`}
-              parts={[
-                { label: "Stopped: store tricks", amount: ww.tricked - ww.trickedPaid, color: SPLIT_COLORS.trick },
-                { label: "Stopped by Maya's rules or her no", amount: ww.withoutMinder - ww.withMinder - (ww.tricked - ww.trickedPaid), color: SPLIT_COLORS.stopped },
-                { label: "Came back through PayPal", amount: ww.recovered, color: SPLIT_COLORS.back },
-                { label: "Paid to stores", amount: ww.withMinder - ww.recovered, color: SPLIT_COLORS.paid },
-              ]}
-            />
-          </div>
           <dl className="grid grid-cols-3 divide-x divide-line rounded-md border border-line bg-paper">
             <div className="px-3 py-2.5 sm:px-4">
               <dt className="text-xs text-muted">Spent this week</dt>
@@ -117,6 +108,18 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
               </dd>
             </div>
           </dl>
+          </div>
+          <div className="rounded-lg border border-line bg-paper p-4 sm:p-5 lg:mt-12">
+            <MoneySplit
+              title={`Where the ${usd(ww.withoutMinder)} ShopBot asked to spend went`}
+              parts={[
+                { label: "Stopped: store tricks", amount: ww.tricked - ww.trickedPaid, color: SPLIT_COLORS.trick },
+                { label: "Stopped by Maya's rules or her no", amount: ww.withoutMinder - ww.withMinder - (ww.tricked - ww.trickedPaid), color: SPLIT_COLORS.stopped },
+                { label: "Came back through PayPal", amount: ww.recovered, color: SPLIT_COLORS.back },
+                { label: "Paid to stores", amount: ww.withMinder - ww.recovered, color: SPLIT_COLORS.paid },
+              ]}
+            />
+          </div>
         </section>
       )}
 
@@ -144,13 +147,19 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
       )}
 
       <section className="flex flex-col gap-5">
-        <h2 className="text-lg font-semibold">Activity</h2>
+        <h2 className="font-display text-2xl font-medium tracking-tight">Activity</h2>
         {db.purchases.length === 0 ? (
           <p className="text-muted">
             Nothing yet. When your agent asks to pay for something, it appears here with Minder&apos;s decision and the reason.
           </p>
         ) : (
-          db.purchases.map((p) => <PurchaseSlip key={p.id} purchase={p} note={noteFor(p, db)} link />)
+          <div className="gap-6 lg:columns-2">
+            {db.purchases.map((p) => (
+              <div key={p.id} className="mb-6 break-inside-avoid">
+                <PurchaseSlip purchase={p} note={noteFor(p, db)} link />
+              </div>
+            ))}
+          </div>
         )}
       </section>
 

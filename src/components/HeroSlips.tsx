@@ -15,18 +15,21 @@ export type DeskSlip = {
   foot?: string;
 };
 
-// Back to front: each slip's store name and stamp stay visible; the front slip is read in full.
+// Back to front. The two slips underneath show only their header, item and amount, so no half-hidden sentences peek out;
+// the front slip is read in full.
 const PLACE = [
-  "right-0 top-0 w-[78%] rotate-[4deg] sm:w-[70%]",
-  "left-0 top-[19%] w-[78%] -rotate-[5deg] sm:w-[70%]",
-  "bottom-0 left-[9%] w-[84%] rotate-[1.5deg] sm:left-[14%] sm:w-[74%]",
+  "left-0 top-0 w-[74%] -rotate-[4deg] sm:w-[70%]",
+  "right-0 top-[15%] w-[74%] rotate-[3.5deg] sm:w-[70%]",
+  "bottom-0 left-[6%] w-[86%] -rotate-[1.5deg] sm:left-[13%] sm:w-[76%]",
 ];
 
 /** Three real purchases from the activity, laid on the desk. The stamps land one after another; the block lands last. */
 export function HeroSlips({ slips }: { slips: DeskSlip[] }) {
   return (
-    <div className="relative h-[470px] sm:h-[480px]" aria-label="Three of Maya's purchases: what Minder did with each">
-      {slips.map((s, n) => (
+    <div className="relative h-[440px] sm:h-[460px]" aria-label="Three of Maya's purchases: what Minder did with each">
+      {slips.map((s, n) => {
+        const front = n === slips.length - 1;
+        return (
         <div key={s.id} className={`desk-slip absolute ${PLACE[n + (3 - slips.length)]}`} style={{ zIndex: n }}>
           <article className="slip px-4 pt-0 text-ink">
             <div aria-hidden className="guilloche -mx-4 mb-3 h-3" />
@@ -56,9 +59,9 @@ export function HeroSlips({ slips }: { slips: DeskSlip[] }) {
                 {usd(s.total)}
               </span>
             </div>
-            <p className={`mt-2 text-[12.5px] leading-snug ${s.noteTone ?? "text-muted"}`}>{s.note}</p>
-            {s.foot && <p className="mt-2 text-xs text-muted">{s.foot}</p>}
-            {s.signature && (
+            {front && <p className={`mt-2 text-[12.5px] leading-snug ${s.noteTone ?? "text-muted"}`}>{s.note}</p>}
+            {front && s.foot && <p className="mt-2 text-xs text-muted">{s.foot}</p>}
+            {front && s.signature && (
               <p className="mt-1 flex items-baseline gap-2">
                 <span className="font-signature text-[1.9rem] leading-none">{s.signature.name}</span>
                 <span className="text-xs text-muted">{s.signature.text}</span>
@@ -66,7 +69,8 @@ export function HeroSlips({ slips }: { slips: DeskSlip[] }) {
             )}
           </article>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
