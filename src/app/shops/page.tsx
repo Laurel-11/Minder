@@ -5,7 +5,7 @@ export default function ShopsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Demo stores</h1>
+        <h1 className="font-display text-3xl font-medium tracking-tight">Demo stores</h1>
         <p className="mt-2 max-w-prose text-muted">
           Fictional stores the demo agent can shop at. One of them hides instructions for AI agents on its product pages. Can you spot it?
         </p>

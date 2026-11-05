@@ -21,9 +21,9 @@ export default async function DashboardPage() {
   const ww = withAndWithout(db.purchases, db.cases);
   const rows = buildDashboardRows(db.purchases, { policy: db.policy, now: demoNow(db), cases: db.cases });
   return (
-    <div className="relative left-1/2 flex w-[min(1180px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-5">
+    <div className="page-wide relative left-1/2 flex w-[min(1180px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-5">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="font-display text-3xl font-medium tracking-tight">Dashboard</h1>
         <p className="mt-2 max-w-prose text-muted">
           Maya&apos;s spending statement: everything ShopBot tried to buy, and what Minder did about it. Built with AG Studio, so you can ask for a new chart in
           plain words.

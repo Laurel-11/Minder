@@ -35,7 +35,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       {waitingForPayPal && <LiveRefresh />}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{p.status === "awaiting_owner" ? "Your agent wants to pay" : "Purchase details"}</h1>
+        <h1 className="font-display text-2xl font-medium tracking-tight">{p.status === "awaiting_owner" ? "Your agent wants to pay" : "Purchase details"}</h1>
         {p.status === "awaiting_owner" && <p className="mt-1 text-muted">Nothing is charged until you decide.</p>}
       </div>
       <PurchaseSlip purchase={p} detailed />

@@ -26,7 +26,7 @@ export default function StatusPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">System status</h1>
+      <h1 className="font-display text-3xl font-medium tracking-tight">System status</h1>
       {error && <p className="text-block">{error}</p>}
       {!health && !error && <p className="text-muted">Checking PayPal and the AI model… (up to 30 seconds)</p>}
       {health && (

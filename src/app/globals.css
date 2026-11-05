@@ -5,6 +5,8 @@
 @font-face { font-family: "Plex"; src: url("/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
 @font-face { font-family: "Plex"; src: url("/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
 @font-face { font-family: "Plex Condensed"; src: url("/fonts/ibm-plex-sans-condensed-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Plex Serif"; src: url("/fonts/ibm-plex-serif-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Plex Serif"; src: url("/fonts/ibm-plex-serif-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
 /* Mrs Saint Delafield (SIL Open Font License, see /public/fonts/OFL-Mrs-Saint-Delafield.txt): only for signatures on the slips. */
 @font-face { font-family: "Signature"; src: url("/fonts/mrs-saint-delafield-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 
@@ -21,6 +23,8 @@
   --color-block: #c0352b;
   --color-block-soft: #f9e3e1;
   --font-sans: "Plex", "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* Page titles: the serif of a bank document, from the same family as the body text. */
+  --font-display: "Plex Serif", Georgia, "Times New Roman", serif;
   --font-stamp: "Plex Condensed", "Plex", "Arial Narrow", sans-serif;
   --font-signature: "Signature", "Brush Script MT", cursive;
 }
@@ -88,3 +92,14 @@ body {
   }
 }
 
+
+/* Hero: purchase slips laid on the desk, like papers under a stamp. The drop shadow sits on a wrapper, because the
+   slip's torn edge is a mask that would clip a box shadow. */
+.desk-slip {
+  filter: drop-shadow(0 10px 18px rgb(27 35 51 / 0.14)) drop-shadow(0 1px 2px rgb(27 35 51 / 0.12));
+}
+
+/* The header lines up with the page under it: wide pages (home, ShopBot, dashboard) mark themselves with .page-wide. */
+body:has(.page-wide) .header-inner {
+  max-width: calc(1120px + 3rem);
+}

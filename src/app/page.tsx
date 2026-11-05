@@ -2,6 +2,8 @@ import Link from "next/link";
 import { disputeWon, moneyBack } from "@/lib/case-money";
 import { ConnectPayPalButton } from "@/components/ConnectPayPalButton";
 import { DemoClock } from "@/components/DemoClock";
+import { HeroSlips, type DeskSlip } from "@/components/HeroSlips";
+import { MoneySplit, SPLIT_COLORS } from "@/components/MoneySplit";
 import { PurchaseSlip } from "@/components/PurchaseSlip";
 import { demoNow } from "@/lib/clock";
 import { withAndWithout } from "@/lib/dashboard-data";
@@ -34,41 +36,57 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const keptSafe = sum(thisWeek.filter((p) => p.status === "blocked" || p.status === "declined_by_owner"));
   const setupDone = Boolean(db.vault && db.policy);
   const ww = withAndWithout(db.purchases, db.cases);
+  const deskSlips = slipsForDesk(db);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="page-wide relative left-1/2 flex w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-12 lg:gap-16">
       {banner && <p className={`rounded-lg px-4 py-3 text-sm ${banner.tone}`}>{banner.text}</p>}
 
-      <section>
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">Buyer protection for the purchases your AI agent makes.</h1>
-        <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-muted">
-          PayPal protects you when an order never arrives or is not as described. But when a store page talks your agent into buying something you never asked for, the
-          order arrives exactly as described, so that protection may not help. Minder checks every purchase before the money moves, and files the claims PayPal does
-          cover when an order goes wrong.{" "}
-          <Link href="/how-it-works" className="text-ink underline underline-offset-2">
-            How it works
-          </Link>
-        </p>
-        {db.purchases.length > 0 && (
-          <p className="mt-3 max-w-prose text-[15px] leading-relaxed">
+      <section className="overflow-x-clip lg:overflow-visible">
+        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
+          <div>
+            <h1 className="font-display text-[2.35rem] font-medium leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.35rem]">
+              Buyer protection for the purchases your AI agent makes.
+            </h1>
+            <p className="mt-5 max-w-[34rem] text-base leading-relaxed text-muted sm:text-[17px]">
+              PayPal protects you when an order never arrives or is not as described. But when a store page talks your agent into buying something you never asked
+              for, the order arrives exactly as described, so that protection may not help. Minder checks every purchase before the money moves, and files the
+              claims PayPal does cover when an order goes wrong.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/agent#trick" className="rounded-lg bg-ink px-5 py-3 text-[15px] font-medium text-paper hover:bg-[#2a3448]">
+                Try to trick it
+              </Link>
+              <Link href="/how-it-works" className="rounded-lg border-2 border-ink px-5 py-2.5 text-[15px] font-medium hover:bg-paper">
+                How it works
+              </Link>
+            </div>
+          </div>
+          {deskSlips.length > 0 && <HeroSlips slips={deskSlips} />}
+        </div>
+      </section>
+
+      {db.purchases.length > 0 && (
+        <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12">
+          <div className="flex flex-col gap-5">
+          <h2 className="font-display text-2xl font-medium tracking-tight">Maya&apos;s week</h2>
+          <p className="max-w-prose text-[15px] leading-relaxed">
             Without Minder, ShopBot would have paid <strong className="tabular-nums">{usd(ww.withoutMinder)}</strong> of Maya&apos;s money
             {ww.tricked > 0 && (
               <>
-                , including <strong className="tabular-nums text-block">{usd(ww.tricked)}</strong> on {ww.trickedOrders === 1 ? "an order" : `${ww.trickedOrders} orders`} a store page tricked it into
+                , including <strong className="tabular-nums">{usd(ww.tricked)}</strong> on {ww.trickedOrders === 1 ? "an order" : `${ww.trickedOrders} orders`} a store page tricked it into
               </>
             )}
             . With Minder, <strong className="tabular-nums">{usd(ww.withMinder)}</strong> went out
             {ww.trickedPaid === 0 && ww.tricked > 0 ? ", none of it to a trick" : ""}
             {ww.recovered > 0 && (
               <>
-                , and <strong className="tabular-nums text-approve">{usd(ww.recovered)}</strong> came back through PayPal after an order went wrong
+                , and <strong className="tabular-nums">{usd(ww.recovered)}</strong> came back through PayPal after an order went wrong
               </>
             )}
             .
           </p>
-        )}
-        {db.purchases.length > 0 && (
-          <dl className="mt-5 grid grid-cols-3 divide-x divide-line rounded-md border border-line bg-paper">
+          <dl className="grid grid-cols-3 divide-x divide-line rounded-md border border-line bg-paper">
             <div className="px-3 py-2.5 sm:px-4">
               <dt className="text-xs text-muted">Spent this week</dt>
               <dd className="text-lg font-semibold tabular-nums sm:text-xl">{usd(spent)}</dd>
@@ -90,8 +108,20 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
               </dd>
             </div>
           </dl>
-        )}
-      </section>
+          </div>
+          <div className="rounded-lg border border-line bg-paper p-4 sm:p-5 lg:mt-12">
+            <MoneySplit
+              title={`Where the ${usd(ww.withoutMinder)} ShopBot asked to spend went`}
+              parts={[
+                { label: "Stopped: store tricks", amount: ww.tricked - ww.trickedPaid, color: SPLIT_COLORS.trick },
+                { label: "Stopped by Maya's rules or her no", amount: ww.withoutMinder - ww.withMinder - (ww.tricked - ww.trickedPaid), color: SPLIT_COLORS.stopped },
+                { label: "Came back through PayPal", amount: ww.recovered, color: SPLIT_COLORS.back },
+                { label: "Paid to stores", amount: ww.withMinder - ww.recovered, color: SPLIT_COLORS.paid },
+              ]}
+            />
+          </div>
+        </section>
+      )}
 
       {!setupDone && (
         <section className="rounded-lg border border-line bg-paper p-5">
@@ -117,13 +147,19 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
       )}
 
       <section className="flex flex-col gap-5">
-        <h2 className="text-lg font-semibold">Activity</h2>
+        <h2 className="font-display text-2xl font-medium tracking-tight">Activity</h2>
         {db.purchases.length === 0 ? (
           <p className="text-muted">
             Nothing yet. When your agent asks to pay for something, it appears here with Minder&apos;s decision and the reason.
           </p>
         ) : (
-          db.purchases.map((p) => <PurchaseSlip key={p.id} purchase={p} note={noteFor(p, db)} link />)
+          <div className="gap-6 lg:columns-2">
+            {db.purchases.map((p) => (
+              <div key={p.id} className="mb-6 break-inside-avoid">
+                <PurchaseSlip purchase={p} note={noteFor(p, db)} link />
+              </div>
+            ))}
+          </div>
         )}
       </section>
 
@@ -150,4 +186,52 @@ function noteFor(p: Purchase, db: Db): { text: string; tone: string } | undefine
   if (isLate(d, now)) return { text: "Not shipped, past the promised date.", tone: "text-block" };
   if (d.state === "awaiting_shipment") return { text: "Waiting for the store to ship.", tone: "text-muted" };
   return { text: d.state === "delivered" ? "Delivered." : `On the way, tracked in PayPal (${d.carrier}).`, tone: "text-muted" };
+}
+
+const itemsOf = (p: Purchase) => p.request.items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.unitPrice }));
+const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n).trimEnd()}…` : t);
+
+/** The hero's three slips, from real purchases: one refunded after it went wrong, one held for the owner, one trick blocked. */
+function slipsForDesk(db: Db): DeskSlip[] {
+  const slips: DeskSlip[] = [];
+  const refundCase = db.cases.find((c) => c.status === "refunded" && c.refund);
+  const refunded = refundCase && db.purchases.find((p) => p.id === refundCase.purchaseId);
+  if (refunded && refundCase?.refund) {
+    slips.push({
+      id: refunded.id,
+      store: refunded.request.merchant.name,
+      items: itemsOf(refunded),
+      total: refunded.total,
+      stamp: { label: `${usd(refundCase.refund.amount)} back`, tone: "text-approve" },
+      note: `It arrived ${refundCase.problem === "damaged" ? "damaged" : "late"}. The store refunded ${usd(refundCase.refund.amount)} through PayPal.`,
+    });
+  }
+  const held = db.purchases.find((p) => p.status === "awaiting_owner") ?? db.purchases.find((p) => p.status === "approved_by_owner");
+  if (held) {
+    const waiting = held.status === "awaiting_owner";
+    slips.push({
+      id: held.id,
+      store: held.request.merchant.name,
+      items: itemsOf(held),
+      total: held.total,
+      stamp: waiting ? { label: "Held for you", tone: "text-hold" } : { label: "Approved by you", tone: "text-approve" },
+      note: waiting ? "Over your $100 line, so PayPal is holding the money until you decide." : "Over your $100 line: PayPal held the money until you signed.",
+      signature: waiting ? undefined : { name: "Maya", text: "Signed by you." },
+    });
+  }
+  const trick = db.purchases.find((p) => p.status === "blocked" && p.ai?.manipulationSuspected && p.ai.manipulationEvidence);
+  if (trick) {
+    slips.push({
+      id: trick.id,
+      store: trick.request.merchant.name,
+      items: itemsOf(trick),
+      total: trick.total,
+      stamp: { label: "Blocked", tone: "text-block" },
+      struck: true,
+      note: `The store's page told the agent: \u201c${clip(trick.ai!.manipulationEvidence.replace(/^["\u201c\u201d']+|["\u201c\u201d']+$/g, ""), 130)}\u201d`,
+      noteTone: "text-ink",
+      foot: "Minder refused to sign. No money moved.",
+    });
+  }
+  return slips;
 }

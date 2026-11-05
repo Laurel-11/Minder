@@ -8,7 +8,7 @@ export default async function RulesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Rules</h1>
+        <h1 className="font-display text-3xl font-medium tracking-tight">Rules</h1>
         <p className="mt-2 max-w-prose text-muted">
           Tell Minder how your agent may spend, the way you would tell a person. It turns your words into limits it checks on every purchase.
         </p>
