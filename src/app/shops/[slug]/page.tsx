@@ -18,7 +18,7 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
         All demo stores
       </Link>
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{store.name}</h1>
+        <h1 className="font-display text-3xl font-medium tracking-tight">{store.name}</h1>
         <p className="mt-1 text-muted">{store.tagline}</p>
       </div>
       <ul className="flex flex-col gap-3">

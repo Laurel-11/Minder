@@ -82,7 +82,7 @@ export default function HowItWorksPage() {
   return (
     <div className="flex flex-col gap-12">
       <section>
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">How Minder works</h1>
+        <h1 className="font-display text-3xl font-medium leading-tight tracking-tight sm:text-4xl">How Minder works</h1>
         <p className="mt-4 max-w-prose text-[15px] leading-relaxed">
           PayPal Buyer Protection covers an order that never arrives or is not as described. It was built for people, who notice problems after delivery. An AI agent&apos;s
           worst losses happen earlier: a store page talks it into an order you never wanted, and that order arrives exactly as described. PayPal&apos;s terms exclude an item

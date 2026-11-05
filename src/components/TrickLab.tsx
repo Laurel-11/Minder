@@ -44,7 +44,7 @@ export function TrickLab({ targets, initialBoard }: { targets: TrickTarget[]; in
   const verdict = result && VERDICT[result.outcome](result);
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-line bg-paper p-5">
+    <section id="trick" className="flex scroll-mt-6 flex-col gap-4 rounded-xl border border-line bg-paper p-5">
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Try to trick it yourself</h2>
         <p className="mt-1 max-w-prose text-sm text-muted">
