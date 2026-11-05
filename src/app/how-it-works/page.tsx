@@ -17,6 +17,17 @@ const GAP = [
 ];
 
 type Step = { title: string; body: string; api?: string; tone?: "approve" | "hold" | "block" };
+const WHY_PAYPAL = [
+  {
+    need: "Let an agent pay without handing it a card",
+    paypal: "A saved permission the owner approves once in PayPal, and can remove from their PayPal account at any time. PayPal tells Minder, which then stops paying.",
+  },
+  { need: "Ask the owner before money moves", paypal: "An authorization: the money is held in the owner's PayPal, captured only if they approve, released if they decline." },
+  { need: "Get money back when an order goes wrong", paypal: "Buyer Protection, refunds and disputes." },
+  { need: "A record nobody has to take on trust", paypal: "Webhooks with signature checks, and APIs that read every payment, refund and dispute back." },
+  { need: "The store's side of the deal", paypal: "PayPal's Agent Toolkit, which the stores' agents use to refund and to answer disputes." },
+];
+
 const STAGES: { name: string; steps: Step[] }[] = [
   {
     name: "Before the money moves",
@@ -119,6 +130,37 @@ export default function HowItWorksPage() {
           ))}
         </div>
         <p className="text-xs text-muted">PayPal decides each claim itself; the middle column summarizes its published terms.</p>
+      </section>
+
+      <section aria-labelledby="why-paypal" className="flex flex-col gap-3">
+        <h2 id="why-paypal" className="text-xl font-semibold tracking-tight">
+          Why PayPal
+        </h2>
+        <p className="max-w-prose text-[15px] leading-relaxed">
+          Minder works for the buyer, and PayPal is where the buyer has their own account, their own protection and their own controls. A payment processor that only
+          serves merchants has none of that. Each part of Minder rests on one of them.
+        </p>
+        <div className="overflow-hidden rounded-lg border border-line bg-paper text-sm">
+          <div className="hidden grid-cols-[1fr_1.6fr] gap-4 border-b border-line bg-canvas px-4 py-2 text-xs font-medium text-muted sm:grid">
+            <span>What Minder needs</span>
+            <span>What PayPal gives the buyer</span>
+          </div>
+          {WHY_PAYPAL.map((w) => (
+            <div key={w.need} className="grid gap-1 border-b border-line px-4 py-3 last:border-b-0 sm:grid-cols-[1fr_1.6fr] sm:gap-4">
+              <span className="font-medium">{w.need}</span>
+              <span>{w.paypal}</span>
+            </div>
+          ))}
+        </div>
+        <p className="max-w-prose text-sm text-muted">
+          PayPal is building agentic commerce for merchants: Agent Ready lets them accept payments from AI assistants, and Store Sync makes their catalogs
+          discoverable (
+          <a href="https://developer.paypal.com/docsai/growth/agentic-commerce/overview" className="underline underline-offset-2">
+            PayPal
+          </a>
+          ). Both serve the merchant. Minder is the buyer&apos;s side of the same transaction, and it covers the gap Buyer Protection leaves, starting with the order an
+          agent was talked into.
+        </p>
       </section>
 
       <section aria-labelledby="flow" className="flex flex-col gap-4">

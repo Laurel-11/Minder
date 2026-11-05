@@ -7,7 +7,7 @@
 - **Live demo:** https://minder-2hey.onrender.com. No login needed. It runs on Render's free plan, so the first visit after a quiet spell can take up to a minute.
 - **Video:** _link added after recording_
 - **Judges:** the [3-minute tour](#try-it-in-3-minutes) shows every feature on the live site.
-- **More:** [How it works](https://minder-2hey.onrender.com/how-it-works) on the live site, the [threat model](SECURITY.md), and [every AI role](docs/AI.md).
+- **More:** [Why PayPal](#why-paypal), [How it works](https://minder-2hey.onrender.com/how-it-works) on the live site, the [threat model](SECURITY.md), and [every AI role](docs/AI.md).
 
 Built for the PayPal AI Hackathon. Sandbox only: no real money moves.
 
@@ -33,6 +33,20 @@ Why now:
 - In Microsoft's simulated marketplace, prompt injection redirected AI agents' payments to manipulative sellers; the researchers concluded that oversight is critical for high-stakes transactions ([The Register, November 2025](https://www.theregister.com/2025/11/06/microsoft_unveils_the_magentic_marketplace/)).
 - PayPal is opening checkout to AI agents, with buyer protection and dispute resolution on the merchant side ([PayPal, October 2025](https://newsroom.paypal-corp.com/2025-10-28-PayPal-Launches-Agentic-Commerce-Services-to-Power-AI-Driven-Shopping)). Minder adds the buyer's side: stopping the order the agent was talked into.
 - Prompt injection is the top risk for LLM applications, and has no fool-proof fix ([OWASP LLM01:2025](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)). Minder follows OWASP's mitigations; see the [threat model](SECURITY.md).
+
+## Why PayPal
+
+Minder works for the buyer, and PayPal is where the buyer has their own account, their own protection and their own controls. A payment processor that only serves merchants has none of that. Each part of Minder rests on one of them:
+
+| What Minder needs | What PayPal gives the buyer |
+|---|---|
+| Let an agent pay without handing it a card | A saved permission (a vault payment token) the owner approves once in PayPal, and can remove from their PayPal account at any time. PayPal's webhook tells Minder, which then stops paying. |
+| Ask the owner before money moves | An authorization: the money is held in the owner's PayPal, captured only if they approve, and released if they decline. |
+| Get money back when an order goes wrong | Buyer Protection, refunds and disputes. |
+| A record nobody has to take on trust | Webhooks with signature checks, and APIs that read every payment, refund and dispute back. |
+| The store's side of the deal | PayPal's Agent Toolkit, which the stores' agents use to refund and to answer disputes. |
+
+PayPal is building agentic commerce for merchants: Agent Ready lets them accept payments from AI assistants, and Store Sync makes their catalogs discoverable to them ([PayPal](https://developer.paypal.com/docsai/growth/agentic-commerce/overview)). Both serve the merchant. Minder is the buyer's side of the same transaction, and it covers the gap Buyer Protection leaves, starting with the order an agent was talked into.
 
 ## With and without Minder
 
@@ -106,7 +120,7 @@ Every purchase ends in one of three outcomes:
 | Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. |
 | Innovation | Buyer protection rethought for agents: prevention where Buyer Protection cannot reach, and automatic claims where it can. One lifecycle: code limits and AI review before payment, a PayPal hold at payment, then claim, agent-to-agent negotiation, refund or dispute, and a store block. Most agent spending guards we looked at stop at checkout. |
 | Presentation | The video, the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
-| Best use of PayPal + AI | AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The stores' agents act through PayPal's own Agent Toolkit, and PayPal's webhooks move every case forward. The demo check reads every result back from PayPal's API. |
+| Best use of PayPal + AI | Minder is built on the buyer's side of PayPal ([why PayPal](#why-paypal)). AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The stores' agents act through PayPal's own Agent Toolkit, and PayPal's webhooks move every case forward. The demo check reads every result back from PayPal's API. |
 | Best use of agentic commerce | Agents on both sides of the deal: a buying agent (ShopBot, or any agent over MCP) and the stores' agents, which answer claims and disputes through PayPal's Agent Toolkit. Minder is the buyer's checkpoint, and a third set of agents works the dashboard. |
 | AG Grid sponsor prize | Two custom AG Studio widgets, a connected six-table data model, and Minder's own agents on Studio's Agent Framework ([details](#how-it-uses-ag-studio)). |
 | Render sponsor prize | Hosted on Render from [`render.yaml`](render.yaml), with a health check at `/api/ping`. |
