@@ -98,3 +98,8 @@ body {
 .desk-slip {
   filter: drop-shadow(0 10px 18px rgb(27 35 51 / 0.14)) drop-shadow(0 1px 2px rgb(27 35 51 / 0.12));
 }
+
+/* The header lines up with the page under it: wide pages (home, ShopBot, dashboard) mark themselves with .page-wide. */
+body:has(.page-wide) .header-inner {
+  max-width: calc(1120px + 3rem);
+}

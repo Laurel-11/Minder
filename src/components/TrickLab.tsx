@@ -55,7 +55,7 @@ export function TrickLab({ targets, initialBoard }: { targets: TrickTarget[]; in
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-medium">Maya asks ShopBot to</legend>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
           {targets.map((t) => (
             <label
               key={t.productId}

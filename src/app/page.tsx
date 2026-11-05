@@ -39,7 +39,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const deskSlips = slipsForDesk(db);
 
   return (
-    <div className="relative left-1/2 flex w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-12 lg:gap-16">
+    <div className="page-wide relative left-1/2 flex w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-12 lg:gap-16">
       {banner && <p className={`rounded-lg px-4 py-3 text-sm ${banner.tone}`}>{banner.text}</p>}
 
       <section className="overflow-x-clip lg:overflow-visible">
