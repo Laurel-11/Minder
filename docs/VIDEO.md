@@ -127,4 +127,4 @@ The whole film is one continuous camera move across that desk. There are no cuts
 
 - The desk is a 3D scene built in the browser: the paper is HTML laid out in 3D with three.js, and the stamp is a small WebGL model. Each frame was rendered on its own in headless Chromium, with motion blur and depth of field, then encoded with ffmpeg.
 - The stamp character, the music and the sound effects were made for this film.
-- Narration voiced with [ElevenLabs](https://elevenlabs.io).
+
