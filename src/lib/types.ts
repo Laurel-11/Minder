@@ -132,7 +132,29 @@ export type RecoveryCase = {
   recommendation?: { action: "accept" | "escalate"; reasoning: string; model?: string };
   status: "offer_to_review" | "refunded" | "escalated" | "closed";
   refund?: { refundId: string; amount: number; status: string };
-  dispute?: { disputeId: string; status: string; stage?: string; updatedAt: string };
+  dispute?: {
+    disputeId: string;
+    status: string;
+    stage?: string;
+    updatedAt: string;
+    /** PayPal's final decision, from the CUSTOMER.DISPUTE.RESOLVED webhook (e.g. RESOLVED_BUYER_FAVOUR). */
+    outcome?: string;
+    amount?: number;
+  };
+};
+
+/** A notification PayPal sent to Minder's webhook, kept after PayPal confirmed its signature. */
+export type PayPalEvent = {
+  id: string;
+  type: string;
+  /** When PayPal created the event. */
+  createdAt: string;
+  receivedAt: string;
+  /** What happened, in the owner's words. */
+  summary: string;
+  resourceId?: string;
+  purchaseId?: string;
+  caseId?: string;
 };
 
 export type Db = {
@@ -146,4 +168,8 @@ export type Db = {
   /** Demo time travel: days added to the real clock so a late delivery can be shown without waiting. */
   demoClockDays?: number;
   pendingSetupTokens: { id: string; createdAt: string }[];
+  /** Newest first: what PayPal's webhooks told Minder. */
+  paypalEvents?: PayPalEvent[];
+  /** Set when PayPal reports that Maya removed Minder's saved payment permission. Minder pays nothing until she reconnects. */
+  vaultRevokedAt?: string;
 };

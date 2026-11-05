@@ -24,6 +24,8 @@ export async function resetDemo(to: "start" | "story" = "start"): Promise<{ back
 
     const cleared = { purchases: db.purchases.length, cases: db.cases.length };
     Object.assign(db, freshDb({ story: to === "story", vault: db.vault }));
+    // PayPal's notifications were about the purchases just cleared. A removed permission stays: that is PayPal's fact, not demo data.
+    delete db.paypalEvents;
     log("demo.reset", { backup, to, ...cleared });
     return { backup, to, cleared };
   });

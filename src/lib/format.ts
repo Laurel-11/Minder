@@ -30,3 +30,6 @@ export function amountInWords(amount: number): string {
   const w = words(dollars);
   return `${w[0].toUpperCase()}${w.slice(1)} and ${String(cents).padStart(2, "0")}/100 dollars`;
 }
+
+/** True when the moment was less than `ms` ago (real time, not the demo clock). */
+export const withinLast = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;

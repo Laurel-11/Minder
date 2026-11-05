@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 
 type Check = { ok: boolean; detail: string };
-type Health = { env: Check; paypal: Check; ai: Check; vault: Check };
+type Health = { env: Check; paypal: Check; ai: Check; webhooks?: Check; vault: Check };
 
 const labels: Record<keyof Health, string> = {
   env: "Configuration",
   paypal: "PayPal sandbox",
-  ai: "AI model (Gemini)",
+  ai: "AI model",
+  webhooks: "PayPal notifications (webhooks)",
   vault: "Maya's saved PayPal",
 };
 
@@ -30,16 +31,16 @@ export default function StatusPage() {
       {!health && !error && <p className="text-muted">Checking PayPal and the AI model… (up to 30 seconds)</p>}
       {health && (
         <ul className="divide-y divide-line rounded-2xl border border-line bg-card">
-          {(Object.keys(labels) as (keyof Health)[]).map((key) => (
+          {(Object.keys(labels) as (keyof Health)[]).filter((key) => health[key]).map((key) => (
             <li key={key} className="flex items-start gap-3 px-5 py-4">
               <span
-                className={`mt-0.5 rounded-full px-2 py-0.5 text-xs font-medium ${health[key].ok ? "bg-approve-soft text-approve" : "bg-block-soft text-block"}`}
+                className={`mt-0.5 rounded-full px-2 py-0.5 text-xs font-medium ${health[key]!.ok ? "bg-approve-soft text-approve" : "bg-block-soft text-block"}`}
               >
-                {health[key].ok ? "OK" : "Problem"}
+                {health[key]!.ok ? "OK" : "Problem"}
               </span>
               <div>
                 <p className="font-medium">{labels[key]}</p>
-                <p className="text-sm text-muted">{health[key].detail}</p>
+                <p className="text-sm text-muted">{health[key]!.detail}</p>
               </div>
             </li>
           ))}

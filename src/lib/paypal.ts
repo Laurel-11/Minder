@@ -55,7 +55,7 @@ const retryable = (status: number, body: unknown) =>
  * (e.g. "<authorization id>:capture"), so the same action can never run twice, whether we retry it
  * here after a timeout or the owner double-clicks. Busy answers are retried with the same key.
  */
-async function call<T = Json>(method: string, path: string, opts: { body?: unknown; idempotent?: boolean | string } = {}): Promise<T> {
+async function call<T = Json>(method: string, path: string, opts: { body?: unknown; rawBody?: string; idempotent?: boolean | string } = {}): Promise<T> {
   const requestId = typeof opts.idempotent === "string" ? opts.idempotent : opts.idempotent ? crypto.randomUUID() : undefined;
   for (let attempt = 1; ; attempt++) {
     const token = await getAccessToken();
@@ -63,7 +63,7 @@ async function call<T = Json>(method: string, path: string, opts: { body?: unkno
     if (requestId) headers["PayPal-Request-Id"] = requestId;
     let res: Response;
     try {
-      res = await fetchWithTimeout(BASE + path, { method, headers, body: opts.body === undefined ? undefined : JSON.stringify(opts.body) });
+      res = await fetchWithTimeout(BASE + path, { method, headers, body: opts.rawBody ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)) });
     } catch (e) {
       // A timeout may have reached PayPal: only a request with a stable key can safely go again.
       if ((method === "GET" || requestId) && attempt < 4) {
@@ -281,4 +281,54 @@ export async function simulateChargeback(input: { captureId: string; amount: Mon
     },
   });
   return { disputeId: r.dispute_id };
+}
+
+// ---------- Webhooks: PayPal tells Minder the moment money moves or a dispute changes ----------
+
+export type WebhookInfo = { id: string; url: string; event_types: { name: string }[] };
+
+export async function listWebhooks() {
+  const r = await call<{ webhooks?: WebhookInfo[] }>("GET", "/v1/notifications/webhooks");
+  return r.webhooks ?? [];
+}
+
+/** Every event type this PayPal app can subscribe to. */
+export async function listWebhookEventTypes() {
+  const r = await call<{ event_types?: { name: string }[] }>("GET", "/v1/notifications/webhooks-event-types");
+  return (r.event_types ?? []).map((e) => e.name);
+}
+
+export function createWebhook(url: string, events: string[]) {
+  return call<WebhookInfo>("POST", "/v1/notifications/webhooks", { body: { url, event_types: events.map((name) => ({ name })) } });
+}
+
+export function setWebhookEvents(webhookId: string, events: string[]) {
+  return call<WebhookInfo>("PATCH", `/v1/notifications/webhooks/${encodeURIComponent(webhookId)}`, {
+    body: [{ op: "replace", path: "/event_types", value: events.map((name) => ({ name })) }],
+  });
+}
+
+export type WebhookHeaders = { authAlgo: string; certUrl: string; transmissionId: string; transmissionSig: string; transmissionTime: string };
+
+/**
+ * The request that asks PayPal whether a delivery really came from PayPal. The event goes back byte for byte
+ * as it arrived: parsing and re-encoding it can change numbers or spacing, and then the signature no longer matches.
+ */
+export function verificationBody(h: WebhookHeaders, webhookId: string, rawEvent: string): string {
+  const field = (name: string, value: string) => `${JSON.stringify(name)}:${JSON.stringify(value)}`;
+  return `{${[
+    field("auth_algo", h.authAlgo),
+    field("cert_url", h.certUrl),
+    field("transmission_id", h.transmissionId),
+    field("transmission_sig", h.transmissionSig),
+    field("transmission_time", h.transmissionTime),
+    field("webhook_id", webhookId),
+  ].join(",")},"webhook_event":${rawEvent}}`;
+}
+
+export async function verifyWebhookSignature(h: WebhookHeaders, webhookId: string, rawEvent: string): Promise<boolean> {
+  const r = await call<{ verification_status?: string }>("POST", "/v1/notifications/verify-webhook-signature", {
+    rawBody: verificationBody(h, webhookId, rawEvent),
+  });
+  return r.verification_status === "SUCCESS";
 }

@@ -56,6 +56,8 @@ export async function assessPurchase(input: { policy: Policy; rulesText?: string
 export async function handlePurchaseRequest(request: PurchaseRequest): Promise<Purchase> {
   const db = await readDb();
   if (!db.vault) throw new PurchaseError("The owner has not connected PayPal yet.", 409);
+  // PayPal's webhook said the owner took Minder's permission away in their PayPal account: pay nothing.
+  if (db.vaultRevokedAt) throw new PurchaseError("The owner removed Minder's permission to pay in their PayPal account. Reconnect PayPal to let the agent pay again.", 409);
   if (!db.policy) throw new PurchaseError("The owner has not written any rules yet.", 409);
 
   const { rules, ai, aiError, decision, reasons } = await assessPurchase({

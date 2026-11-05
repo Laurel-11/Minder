@@ -1,5 +1,7 @@
 import { shortDateTime } from "@/lib/format";
+import { disputeWon } from "@/lib/case-money";
 import { usd } from "@/lib/money";
+import { outcomeInWords } from "@/lib/paypal-events";
 import { disputeInWords } from "@/lib/recovery";
 import type { Offer, RecoveryCase } from "@/lib/types";
 import { BlockStore } from "./BlockStore";
@@ -20,12 +22,19 @@ export function CaseView({
   storeBlocked?: boolean;
 }) {
   const lastOffer = c.messages.filter((m) => m.from === "merchant").at(-1)?.offer;
+  const won = disputeWon(c);
   const headline =
     c.status === "refunded"
       ? `${usd(c.refund?.amount ?? 0)} is back in your PayPal.`
-      : c.status === "escalated"
-        ? `Escalated to PayPal: ${disputeInWords(c.dispute?.status ?? "OPEN")}`
-        : "Minder needs your decision.";
+      : c.status === "closed" && c.dispute?.outcome
+        ? won
+          ? `${c.dispute.amount ? usd(c.dispute.amount) : "Your money"} is back in your PayPal: PayPal closed the case in your favour.`
+          : outcomeInWords(c.dispute.outcome)
+        : c.status === "escalated"
+          ? `Escalated to PayPal: ${disputeInWords(c.dispute?.status ?? "OPEN")}`
+          : c.status === "closed"
+            ? "Case closed."
+            : "Minder needs your decision.";
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-line bg-paper p-5">
@@ -33,7 +42,7 @@ export function CaseView({
         <p className="text-sm text-muted">
           {c.openedBy === "minder" ? "Minder noticed this order never shipped and opened a case." : `You reported that it ${c.problem === "not_delivered" ? "never arrived" : "arrived damaged"}.`}
         </p>
-        <h2 className={`mt-1 text-xl font-semibold ${c.status === "refunded" ? "text-approve" : ""}`}>{headline}</h2>
+        <h2 className={`mt-1 text-xl font-semibold ${c.status === "refunded" || won ? "text-approve" : ""}`}>{headline}</h2>
       </div>
 
       <ol className="flex flex-col gap-3">

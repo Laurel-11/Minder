@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const { vaultId, customerId } = await createPaymentToken(pending.id);
     await updateDb((d) => {
       d.vault = { vaultId, customerId, savedAt: new Date().toISOString() };
+      delete d.vaultRevokedAt;
       d.pendingSetupTokens = [];
     });
     log("vault.saved");

@@ -2,6 +2,7 @@
 // Every table that describes purchases carries purchaseId, so the dashboard can relate them and a
 // click in one widget filters the others.
 import type { Outcome, Policy, Purchase, PurchaseStatus, RecoveryCase } from "./types";
+import { moneyBack } from "./case-money";
 
 export const STATUS_LABEL: Record<PurchaseStatus, string> = {
   paid: "Approved",
@@ -152,7 +153,7 @@ export function withAndWithout(purchases: Purchase[], cases: RecoveryCase[] = []
     /** What actually left the owner's PayPal. */
     withMinder: sum(purchases.filter((p) => moneyMoved(p.status))),
     trickedPaid: sum(tricked.filter((p) => moneyMoved(p.status))),
-    /** Money PayPal refunded afterwards, through a recovery case. */
+    /** Money that came back afterwards: a refund the owner accepted, or a PayPal dispute won. */
     recovered: Math.round(cases.reduce((s, c) => s + refundOf(c), 0) * 100) / 100,
   };
 }
@@ -160,9 +161,7 @@ export function withAndWithout(purchases: Purchase[], cases: RecoveryCase[] = []
 const PERIOD_DAYS = { day: 1, week: 7, month: 30 } as const;
 const unquote = (s: string) => s.trim().replace(/^["“”']+|["“”']+$/g, "").trim();
 
-function refundOf(c?: RecoveryCase): number {
-  return c?.status === "refunded" ? (c.refund?.amount ?? 0) : 0;
-}
+const refundOf = (c?: RecoveryCase): number => moneyBack(c);
 
 export function buildDashboardRows(purchases: Purchase[], opts: { policy?: Policy; now?: Date; cases?: RecoveryCase[] } = {}): DashboardRows {
   const cases = opts.cases ?? [];

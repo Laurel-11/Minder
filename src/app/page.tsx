@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { disputeWon, moneyBack } from "@/lib/case-money";
 import { ConnectPayPalButton } from "@/components/ConnectPayPalButton";
 import { DemoClock } from "@/components/DemoClock";
 import { PurchaseSlip } from "@/components/PurchaseSlip";
@@ -131,6 +132,10 @@ function noteFor(p: Purchase, db: Db): { text: string; tone: string } | undefine
   if (c) {
     if (c.status === "refunded") return { text: `Money back: ${usd(c.refund?.amount ?? 0)} refunded through PayPal.`, tone: "text-approve" };
     if (c.status === "escalated") return { text: `Escalated to PayPal (case ${c.dispute?.disputeId}).`, tone: "text-hold" };
+    if (c.status === "closed")
+      return disputeWon(c)
+        ? { text: `Money back: PayPal closed case ${c.dispute?.disputeId} in your favour${moneyBack(c) ? ` (${usd(moneyBack(c))})` : ""}.`, tone: "text-approve" }
+        : { text: "Case closed.", tone: "text-muted" };
     return { text: `${p.request.merchant.name} replied to Minder's claim. Your decision is needed.`, tone: "text-hold" };
   }
   if (!p.delivery) return undefined;

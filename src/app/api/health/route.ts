@@ -2,6 +2,7 @@ import { generateJson, readReplay } from "@/lib/ai";
 import { readDb } from "@/lib/db";
 import { missingEnv } from "@/lib/env";
 import { getAccessToken } from "@/lib/paypal";
+import { canReceiveWebhooks, ensureWebhook } from "@/lib/paypal-events";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +27,29 @@ export async function GET() {
       }),
     readDb(),
   ]);
+  const last = db.paypalEvents?.[0];
+  const webhooks: Check = canReceiveWebhooks()
+    ? await ensureWebhook()
+        .then((h): Check =>
+          h
+            ? {
+                ok: true,
+                detail: `PayPal sends ${h.events.length} kinds of event to ${h.url}, each signature checked with PayPal. ${
+                  last ? `Latest: "${last.summary}" (${last.type}, ${new Date(last.receivedAt).toUTCString()}).` : "None received since the site last restarted."
+                }`,
+              }
+            : { ok: false, detail: "No webhook set up." },
+        )
+        .catch((e: Error): Check => ({ ok: false, detail: e.message }))
+    : { ok: true, detail: "PayPal sends its notifications to the public site. This copy runs without a public address, so it checks PayPal directly instead." };
   return Response.json({
     env: { ok: missing.length === 0, detail: missing.length ? `Missing in .env.local: ${missing.join(", ")}` : "All keys present" },
     paypal,
     ai,
-    vault: db.vault
+    webhooks,
+    vault: db.vaultRevokedAt
+      ? { ok: false, detail: "Maya removed Minder's permission in her PayPal account, so Minder pays for nothing until she reconnects." }
+      : db.vault
       ? { ok: true, detail: `Maya's PayPal is connected (saved ${new Date(db.vault.savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" })})` }
       : { ok: false, detail: "Maya has not connected PayPal yet" },
   });
