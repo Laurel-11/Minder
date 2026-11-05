@@ -20,7 +20,7 @@ export class PurchaseError extends Error {
  * Steps 1 and 2 of every purchase: hard rules, then the AI review, then the combined decision.
  * Shared by real purchases and the self-test exam, so the exam grades exactly what runs in production.
  */
-export async function assessPurchase(input: { policy: Policy; rulesText?: string; request: PurchaseRequest; history: Purchase[]; now?: Date }) {
+export async function assessPurchase(input: { policy: Policy; rulesText?: string; request: PurchaseRequest; history: Purchase[]; now?: Date; liveOnly?: boolean }) {
   const { policy, request, history } = input;
 
   // 1. Hard rules (plain code). The AI can never loosen these.
@@ -31,7 +31,7 @@ export async function assessPurchase(input: { policy: Policy; rulesText?: string
   let aiError: string | undefined;
   if (rules.outcome !== "block") {
     try {
-      ai = await reviewPurchase({ request, total: rules.total, rulesText: input.rulesText, recent: history });
+      ai = await reviewPurchase({ request, total: rules.total, rulesText: input.rulesText, recent: history, liveOnly: input.liveOnly });
     } catch (e) {
       aiError = (e as Error).message;
     }
@@ -49,6 +49,7 @@ export async function assessPurchase(input: { policy: Policy; rulesText?: string
     reasons.push(...rules.checks.filter((c) => c.rule.includes("budget")).map((c) => c.message));
     if (reasons.length === 0) reasons.push("Within all of your rules.");
   }
+  if (ai?.recorded) reasons.push("The live AI reviewer was unavailable, so this is its recorded review of this exact order.");
   return { rules, ai, aiError, decision, reasons };
 }
 

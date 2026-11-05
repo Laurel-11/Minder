@@ -66,6 +66,8 @@ export type AiReview = {
   riskFlags: string[];
   summaryForOwner: string;
   model: string;
+  /** True when the live AI was unavailable and this is its recorded review of the same order. */
+  recorded?: boolean;
 };
 
 export type PurchaseStatus =

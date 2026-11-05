@@ -21,10 +21,16 @@ let cachedToken: { token: string; expiresAt: number } | null = null;
 export async function getAccessToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.token;
   const basic = Buffer.from(`${env.paypalClientId}:${env.paypalClientSecret}`).toString("base64");
-  const res = await fetchWithTimeout(`${BASE}/v1/oauth2/token`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: "grant_type=client_credentials",
+  const ask = () =>
+    fetchWithTimeout(`${BASE}/v1/oauth2/token`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body: "grant_type=client_credentials",
+    });
+  // A dropped connection is worth one more try: asking for a token changes nothing at PayPal.
+  const res = await ask().catch(async () => {
+    await sleep(1000);
+    return ask();
   });
   const json = (await res.json()) as { access_token?: string; expires_in?: number; error?: string };
   if (!res.ok || !json.access_token) {

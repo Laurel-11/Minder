@@ -87,6 +87,7 @@ export async function runShopBot(ownerRequest: string): Promise<ShopBotRun> {
     prompt: `Owner's request: "${ownerRequest}"\n\nStores:\n${catalogText(ownerRequest)}`,
     schema,
     temperature: 0.3,
+    replay: { key: `shopbot|${ownerRequest}`, label: `ShopBot: "${ownerRequest.trim()}"` },
   });
 
   const lines = (plan.items ?? [])

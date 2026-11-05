@@ -37,6 +37,8 @@ export async function reviewPurchase(input: {
   total: number;
   rulesText?: string;
   recent: Purchase[];
+  /** The exam grades the live AI only: nothing is recorded and no recorded answer is used. */
+  liveOnly?: boolean;
 }): Promise<AiReview> {
   const { request: r } = input;
   const items = r.items.map((i) => `- ${i.quantity} x ${i.name} (${i.category}) @ ${usd(i.unitPrice)}`).join("\n");
@@ -57,6 +59,16 @@ ${items}
 <recent_purchases>
 ${recent}
 </recent_purchases>`;
-  const { data, model } = await generateJson<Omit<AiReview, "model">>({ system: SYSTEM, prompt, schema, temperature: 0.1 });
-  return { ...data, riskFlags: data.riskFlags ?? [], model };
+  const { data, model, recorded } = await generateJson<Omit<AiReview, "model">>({
+    system: SYSTEM,
+    prompt,
+    schema,
+    temperature: 0.1,
+    // The same order on the same page always gets the same review: dates, history and the site's own address are left out.
+    replay: input.liveOnly ? undefined : {
+      key: ["review", r.merchant.name, r.ownerInstruction, items, r.justification, r.pageExcerpt ?? ""].join("|"),
+      label: `Review: ${r.merchant.name}, "${r.ownerInstruction}"`,
+    },
+  });
+  return { ...data, riskFlags: data.riskFlags ?? [], model, ...(recorded && { recorded: true }) };
 }

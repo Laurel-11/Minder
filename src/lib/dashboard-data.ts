@@ -136,6 +136,27 @@ export type DashboardRows = {
   caseSteps: CaseStepRow[];
 };
 
+/**
+ * The counterfactual: what ShopBot would have paid if every request had simply gone through,
+ * against what actually left the owner's PayPal, and what came back afterwards.
+ */
+export function withAndWithout(purchases: Purchase[], cases: RecoveryCase[] = []) {
+  const sum = (list: Purchase[]) => Math.round(list.reduce((s, p) => s + p.total, 0) * 100) / 100;
+  const tricked = purchases.filter((p) => p.ai?.manipulationSuspected);
+  return {
+    /** Everything ShopBot asked to pay: what an unguarded agent would have spent. */
+    withoutMinder: sum(purchases),
+    /** The part of that on orders a store page had steered the agent into. */
+    tricked: sum(tricked),
+    trickedOrders: tricked.length,
+    /** What actually left the owner's PayPal. */
+    withMinder: sum(purchases.filter((p) => moneyMoved(p.status))),
+    trickedPaid: sum(tricked.filter((p) => moneyMoved(p.status))),
+    /** Money PayPal refunded afterwards, through a recovery case. */
+    recovered: Math.round(cases.reduce((s, c) => s + refundOf(c), 0) * 100) / 100,
+  };
+}
+
 const PERIOD_DAYS = { day: 1, week: 7, month: 30 } as const;
 const unquote = (s: string) => s.trim().replace(/^["“”']+|["“”']+$/g, "").trim();
 

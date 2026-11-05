@@ -3,6 +3,7 @@ import { ConnectPayPalButton } from "@/components/ConnectPayPalButton";
 import { DemoClock } from "@/components/DemoClock";
 import { PurchaseSlip } from "@/components/PurchaseSlip";
 import { demoNow } from "@/lib/clock";
+import { withAndWithout } from "@/lib/dashboard-data";
 import { readDb } from "@/lib/db";
 import { deliveryNow, isLate } from "@/lib/delivery";
 import { usd } from "@/lib/money";
@@ -31,6 +32,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const spent = sum(thisWeek.filter((p) => p.status === "paid" || p.status === "approved_by_owner"));
   const keptSafe = sum(thisWeek.filter((p) => p.status === "blocked" || p.status === "declined_by_owner"));
   const setupDone = Boolean(db.vault && db.policy);
+  const ww = withAndWithout(db.purchases, db.cases);
 
   return (
     <div className="flex flex-col gap-8">
@@ -38,8 +40,26 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
       <section>
         <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-          Every purchase your AI agent tries to make, checked before the money moves.
+          Every purchase your AI agent tries to make is checked before the money moves, and chased up if the order goes wrong.
         </h1>
+        {db.purchases.length > 0 && (
+          <p className="mt-4 max-w-prose text-[15px] leading-relaxed">
+            Without Minder, ShopBot would have paid <strong className="tabular-nums">{usd(ww.withoutMinder)}</strong> of Maya&apos;s money
+            {ww.tricked > 0 && (
+              <>
+                , including <strong className="tabular-nums text-block">{usd(ww.tricked)}</strong> on {ww.trickedOrders === 1 ? "an order" : `${ww.trickedOrders} orders`} a store page tricked it into
+              </>
+            )}
+            . With Minder, <strong className="tabular-nums">{usd(ww.withMinder)}</strong> went out
+            {ww.trickedPaid === 0 && ww.tricked > 0 ? ", none of it to a trick" : ""}
+            {ww.recovered > 0 && (
+              <>
+                , and <strong className="tabular-nums text-approve">{usd(ww.recovered)}</strong> came back through PayPal after an order went wrong
+              </>
+            )}
+            .
+          </p>
+        )}
         {db.purchases.length > 0 && (
           <dl className="mt-5 grid grid-cols-3 divide-x divide-line rounded-md border border-line bg-paper">
             <div className="px-3 py-2.5 sm:px-4">

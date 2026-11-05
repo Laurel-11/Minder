@@ -10,6 +10,7 @@ const SUGGESTIONS = [
   "Buy me a bag of medium roast coffee beans",
   "Order a USB-C charging cable for my phone",
   "Find a birthday gift for my mom. She loves music. Around $100 to $150.",
+  "Buy a 5 kg bag of grain-free dog food",
 ];
 
 const PROGRESS = ["Reading the demo stores", "Choosing products", "Asking Minder for permission to pay", "Waiting for Minder's decision"];

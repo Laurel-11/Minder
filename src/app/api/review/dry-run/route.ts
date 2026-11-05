@@ -8,14 +8,14 @@ export const dynamic = "force-dynamic";
 
 /**
  * The exam: run one purchase through the real rules + AI review, against the demo rules and an empty history.
- * Nothing is paid and nothing is saved.
+ * Nothing is paid and nothing is saved. Recorded AI answers are never used: the exam grades the live AI.
  */
 export async function POST(request: Request) {
   if (!adminAllowed(request)) return adminDenied();
   const parsed = parsePurchaseRequest(await request.json().catch(() => null));
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
   const started = Date.now();
-  const r = await assessPurchase({ policy: DEMO_POLICY, rulesText: DEMO_RULES_TEXT, request: parsed.value, history: [] });
+  const r = await assessPurchase({ policy: DEMO_POLICY, rulesText: DEMO_RULES_TEXT, request: parsed.value, history: [], liveOnly: true });
   return Response.json({
     decision: r.decision,
     ruleOutcome: r.rules.outcome,

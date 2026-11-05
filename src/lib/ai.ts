@@ -1,5 +1,10 @@
 // AI client: JSON-only answers, hard timeouts, retries and fallbacks. DeepSeek is tried first when its
 // key is set, then Gemini (see env.aiProviders), so one provider being down or out of quota is survivable.
+// If every provider fails, calls that name a replay key get the answer the AI gave for that exact
+// request when it was recorded (src/lib/ai-replay.json), clearly marked, so the demo keeps working.
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import { env } from "./env";
 import { fetchWithTimeout, sleep } from "./http";
 import { log } from "./log";
@@ -20,15 +25,59 @@ export type Schema = {
   nullable?: boolean;
 };
 
-type JsonInput = { system: string; prompt: string; schema: Schema; temperature?: number; timeoutMs?: number };
+type JsonInput = {
+  system: string;
+  prompt: string;
+  schema: Schema;
+  temperature?: number;
+  timeoutMs?: number;
+  /** Names this request for the replay file. Leave out what changes from run to run (dates, history, URLs). */
+  replay?: { key: string; label: string };
+};
 
-export async function generateJson<T>(input: JsonInput): Promise<{ data: T; model: string }> {
+export async function generateJson<T>(input: JsonInput): Promise<{ data: T; model: string; recorded?: boolean }> {
   const errors: string[] = [];
   for (const provider of env.aiProviders) {
     const result = provider === "deepseek" ? await deepseekJson<T>(input, errors) : await geminiJson<T>(input, errors);
-    if (result) return result;
+    if (result) {
+      if (input.replay) recordReplay(input.replay, result.data, result.model);
+      return result;
+    }
+  }
+  const hit = input.replay ? readReplay()[replayId(input.replay.key)] : undefined;
+  if (hit && !shapeProblem(hit.data, input.schema)) {
+    log("ai.replay", { label: hit.label, errors: errors.length });
+    return { data: hit.data as T, model: `${hit.model}, recorded ${hit.recordedAt.slice(0, 10)}`, recorded: true };
   }
   throw new AiUnavailableError(`AI is unavailable right now (${errors.join("; ") || "no AI key is set"})`);
+}
+
+// ---------- Replay: the AI's recorded answers for the demo's own requests ----------
+
+export const REPLAY_FILE = process.env.AI_REPLAY_FILE ?? path.join(process.cwd(), "src", "lib", "ai-replay.json");
+type ReplayEntry = { label: string; model: string; recordedAt: string; data: unknown };
+
+export const replayId = (key: string) => crypto.createHash("sha256").update(key.trim().toLowerCase()).digest("hex").slice(0, 16);
+
+export function readReplay(): Record<string, ReplayEntry> {
+  try {
+    return JSON.parse(fs.readFileSync(process.env.AI_REPLAY_FILE ?? REPLAY_FILE, "utf8")) as Record<string, ReplayEntry>;
+  } catch {
+    return {};
+  }
+}
+
+/** Development only: keep the latest real answer for each named request, to ship with the code. */
+function recordReplay(replay: { key: string; label: string }, data: unknown, model: string) {
+  if (process.env.NODE_ENV !== "development") return;
+  try {
+    const all = readReplay();
+    all[replayId(replay.key)] = { label: replay.label, model, recordedAt: new Date().toISOString(), data };
+    const sorted = Object.fromEntries(Object.entries(all).sort(([, a], [, b]) => a.label.localeCompare(b.label)));
+    fs.writeFileSync(REPLAY_FILE, JSON.stringify(sorted, null, 1) + "\n");
+  } catch (e) {
+    log("ai.replay_record_failed", { error: (e as Error).message });
+  }
 }
 
 // ---------- DeepSeek (OpenAI-compatible chat completions) ----------

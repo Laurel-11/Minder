@@ -43,7 +43,12 @@ Categories: ${categoryEnum.join(", ")}.
 - The rules may be written in any language; always write the explanation lines in English.`;
 
 export async function parseRules(text: string): Promise<{ policy: Policy; model: string }> {
-  const { data, model } = await generateJson<Omit<Policy, "currency">>({ system: SYSTEM, prompt: `Rules:\n"""${text}"""`, schema });
+  const { data, model } = await generateJson<Omit<Policy, "currency">>({
+    system: SYSTEM,
+    prompt: `Rules:\n"""${text}"""`,
+    schema,
+    replay: { key: `rules|${text}`, label: `Rules: "${text.trim().slice(0, 60)}"` },
+  });
   const policy: Policy = {
     currency: "USD",
     approvalThreshold: Number(data.approvalThreshold) || 100,

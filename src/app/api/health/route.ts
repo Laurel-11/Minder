@@ -1,4 +1,4 @@
-import { generateJson } from "@/lib/ai";
+import { generateJson, readReplay } from "@/lib/ai";
 import { readDb } from "@/lib/db";
 import { missingEnv } from "@/lib/env";
 import { getAccessToken } from "@/lib/paypal";
@@ -20,7 +20,10 @@ export async function GET() {
       timeoutMs: 20_000,
     })
       .then((r): Check => ({ ok: r.data.ok === true, detail: `Model ${r.model} answered` }))
-      .catch((e: Error): Check => ({ ok: false, detail: e.message })),
+      .catch((e: Error): Check => {
+        const recorded = Object.keys(readReplay()).length;
+        return { ok: false, detail: `${e.message}${recorded ? `. Until it is back, ${recorded} recorded answers keep the sample requests working.` : ""}` };
+      }),
     readDb(),
   ]);
   return Response.json({

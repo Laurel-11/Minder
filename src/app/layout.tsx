@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NavLinks } from "@/components/NavLinks";
+import { ResetDemo } from "@/components/ResetDemo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,7 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div aria-hidden className="guilloche-dark h-3" />
         </header>
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">{children}</main>
-        <footer className="py-6 text-center text-xs text-muted">Sandbox demo. No real money moves.</footer>
+        <footer className="flex flex-wrap justify-center gap-x-2 py-6 text-center text-xs text-muted">
+          <span>Sandbox demo. No real money moves.</span>
+          <ResetDemo />
+        </footer>
       </body>
     </html>
   );

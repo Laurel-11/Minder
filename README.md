@@ -1,11 +1,40 @@
 # Minder
 
-**A PayPal-powered bodyguard for your AI shopping agent.** Minder checks every purchase before the money moves, and gets your money back when something goes wrong.
+[![CI](https://github.com/Laurel-11/Minder/actions/workflows/ci.yml/badge.svg)](https://github.com/Laurel-11/Minder/actions/workflows/ci.yml)
 
-- Live demo: https://minder-2hey.onrender.com (free plan: the first visit after a quiet spell can take up to a minute to wake up)
-- Video: _link added after recording_
+**A bodyguard for AI shopping agents, built on PayPal.** Every purchase your agent tries to make is checked before the money moves, and chased up through PayPal if the order goes wrong.
 
-Built for the PayPal AI Hackathon (Agentic Commerce). Sandbox only: no real money moves.
+- **Live demo:** https://minder-2hey.onrender.com. No login needed. It runs on Render's free plan, so the first visit after a quiet spell can take up to a minute.
+- **Video:** _link added after recording_
+- **Judges:** the [3-minute tour](#try-it-in-3-minutes) shows every feature on the live site.
+
+Built for the PayPal AI Hackathon. Sandbox only: no real money moves.
+
+## With and without Minder
+
+The live site opens on Maya's week. Her shopping agent, ShopBot, tried to make 9 purchases with her PayPal, all of them real sandbox transactions.
+
+| | Without Minder | With Minder |
+|---|---|---|
+| Money that left Maya's PayPal | $613.00 | $186.00 |
+| Paid to stores that tricked the agent (3 orders) | $188.00 | $0.00 |
+| After an order went wrong | Maya chases the store herself | $15.00 refunded through PayPal, and a PayPal dispute for the order that never shipped |
+
+On the 28-purchase exam ([report](docs/proof/exam.md)), the 14 tricked orders would have charged $682.99 with no checks. Minder let $0.00 of them through, and still paid all 8 normal purchases without bothering the owner.
+
+## Try it in 3 minutes
+
+Each step says what to click and what you should see.
+
+1. **Start clean.** Click **Reset the demo** at the bottom of any page. You should see "Back to the sample story." Anyone can reset, at most once a minute.
+2. **A trick, blocked.** Open **Try ShopBot** and pick "Order a USB-C charging cable for my phone". The store page hides a note telling AI agents to add a $39 protection plan. ShopBot obeys; Minder **blocks** the order and quotes the note. No PayPal order is created.
+3. **A big purchase, held.** Ask ShopBot to "Buy wireless headphones for my dad's birthday". $129 is over Maya's $100 ask-me line, so PayPal **holds** the money and Minder asks the owner. Open the purchase: **Pay $129.00** captures the held money, **Decline** releases it.
+4. **An order gone wrong.** On **Activity**, open the phone case from QuickGadgets Outlet. It never shipped. Minder noticed on its own, wrote the claim, the store's agent refused, and the case became a PayPal dispute. Click **Block QuickGadgets Outlet**, then ask ShopBot to "Get me a clear phone case": plain code stops it before any money moves.
+5. **The dashboard.** Open **Dashboard** and follow the money in the flow chart; click any block to filter the whole report. **Tricks caught** shows the exact words store pages hid for the agent. Then click **Customize with AI** and try the starters:
+   - **Why was it blocked?** explains a decision in plain words.
+   - **Check with PayPal** compares Minder's records with PayPal's own API.
+   - **What if** replays every past purchase through the real rules with a $15 food budget.
+   - **Anything to sign?** If the headphones from step 3 are still waiting, a cheque appears. Only your click on **Sign and pay** moves money; the agent cannot.
 
 ## The problem
 
@@ -19,19 +48,49 @@ A budget written into your agent's prompt is a wish: a single line on a web page
 
 ## What Minder does
 
-Minder sits between the agent and the owner's PayPal. Every purchase goes through three layers.
+Minder sits between the agent and the owner's PayPal, and covers the whole life of a purchase: before payment, at payment and after it.
 
 | Layer | What it does | Can it be talked out of it? |
 |---|---|---|
 | **1. Code limits** | The owner writes rules in plain English ("food: $60 a week, ask me above $100, never gift cards"). An AI model turns them into a policy once; plain TypeScript enforces it on every purchase. | No. The AI can make a decision stricter, never looser, so the worst case is bounded by the owner's own limits. |
-| **2. AI review** | Everything the code allows is checked against the owner's own words. Store page text is treated as untrusted data: extra items, bigger quantities, swapped products and overcharges are blocked. A store that tries to steer AI agents is held for the owner even when the order itself is fine. | It is tested against 28 known attacks and normal purchases (see below). |
-| **3. PayPal recovery** | After payment, Minder watches the delivery. If the order never ships or arrives damaged, it writes the claim with an evidence timeline, negotiates with the store's agent, and recommends accepting the offer or escalating. Accepting issues a PayPal refund; escalating opens a PayPal dispute. Afterwards it offers to block the store, so the same store can never be paid again. | Whatever slips through the first two layers can still be recovered. |
+| **2. AI review** | Everything the code allows is checked against the owner's own words. Store page text is treated as untrusted data: extra items, bigger quantities, swapped products and overcharges are blocked. A store that tries to steer AI agents is held for the owner even when the order itself is fine. | It is tested against 28 known attacks and normal purchases (see [Proof](#proof-not-promises)). |
+| **3. PayPal recovery** | After payment, Minder watches the delivery. If the order never ships or arrives damaged, it writes the claim with an evidence timeline, negotiates with the store's agent, and recommends accepting the offer or escalating. Accepting issues a PayPal refund; escalating opens a PayPal dispute. Afterwards it offers to block the store, so it can never be paid again. | Whatever slips through the first two layers can still be recovered. |
 
 Every purchase ends in one of three outcomes:
 
 - **Approve:** paid immediately.
 - **Hold:** PayPal authorizes (holds) the money and the owner gets a one-tap page. Approving captures it; declining voids the hold.
 - **Block:** no PayPal order is created at all, and the owner sees why.
+
+## How it maps to the judging criteria
+
+| Criterion | Where to look |
+|---|---|
+| Technological implementation | Six PayPal API areas (next section), every write idempotent and safely retried. AI in six roles, each answer checked against a JSON schema. 46 unit tests that need no keys, run by CI on every push. |
+| Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, and the AG Studio dashboard is themed as part of the product. |
+| Potential impact | Agents that shop need a wallet the owner can trust. The owner's limits hold even when the agent is fooled, and recovery covers what slips through. |
+| Innovation | The full purchase lifecycle in one place: code limits and AI review before payment, a PayPal hold at payment, and claim, negotiation, refund or dispute, then a store block, after it. Most agent spending guards we looked at stop at checkout. |
+| Presentation | The video, the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
+| Best use of PayPal + AI | AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The demo check reads every result back from PayPal's own API. |
+| Best use of agentic commerce | A real buying agent (ShopBot) shops simulated stores whose pages and customer-service agents try to manipulate it. Minder is its checkpoint, and a third set of agents works the dashboard. |
+| AG Grid sponsor prize | Two custom AG Studio widgets, a connected six-table data model, and Minder's own agents on Studio's Agent Framework ([details](#how-it-uses-ag-studio)). |
+| Render sponsor prize | Hosted on Render from [`render.yaml`](render.yaml), with a health check at `/api/ping`. |
+
+## What is verified, and what is not
+
+**Verified**
+
+- **Real sandbox money movement.** Orders, holds, captures, voids, refunds, tracking and disputes all happen in the PayPal sandbox. The demo check reads each one back from PayPal's API, not from Minder's records ([latest report](docs/proof/demo-check.md): 17 of 17).
+- **The AI review.** 28 purchases with answers fixed in advance, graded by code, on the live AI only ([latest report](docs/proof/exam.md): 28 of 28).
+- **The safety properties, by unit tests.** The AI can never loosen the code's decision (all nine combinations), gift cards are blocked without asking the AI, an AI failure means the owner decides, a PayPal retry reuses the same request id, and other websites cannot call Minder's API. Run `npm test`; no keys needed.
+
+**Simulated, or not yet real**
+
+- **The stores.** The four stores, their shipping and their customer-service agents are simulated: one store never ships, one ships damaged goods. The money moving around them is real sandbox PayPal.
+- **Who gets paid.** In the demo every store is paid through one sandbox business account, so Minder is not acting for real independent merchants. In production each store would be its own PayPal merchant, and Minder would act for the buyer only. Minder never holds the money itself.
+- **Opening a dispute.** The sandbox does not let a third-party app open a dispute in the buyer's name, so the demo uses PayPal's sandbox chargeback simulator to create a real sandbox dispute, which then moves through PayPal's normal stages. In production this would be the buyer's own PayPal dispute, filed with the evidence Minder prepared.
+- **The exam.** These are our own cases, so treat them as a regression test, not a benchmark.
+- **Scale.** A single-user demo; data is a JSON file. On the free cloud plan it returns to the sample story on every restart.
 
 ## How it uses PayPal
 
@@ -42,17 +101,21 @@ Every purchase ends in one of three outcomes:
 | Payments v2: capture, void, refund | Owner approves or declines a hold; accepted store offers are refunded. |
 | Order tracking (`/v2/checkout/orders/{id}/track`) | Tracking numbers are registered on the order, so PayPal sees the shipment too. |
 | Disputes v1 | Escalated cases: read status and life-cycle stage, and accept the claim on the store's side in the demo. |
-| Sandbox chargeback simulator | Opens the dispute when a case is escalated (see the honest notes below). |
+| Sandbox chargeback simulator | Opens the dispute when a case is escalated (see above). |
+
+Every PayPal write carries a `PayPal-Request-Id` built from what it acts on (for example `AUTH-123:capture`), so a retry after a timeout, a rate limit or `PREVIOUS_REQUEST_IN_PROGRESS` can never charge or refund twice.
 
 ## How it uses AI
 
-Minder runs on DeepSeek (`deepseek-flash`) and falls back to Gemini if DeepSeek is down; set either key. Every answer is JSON checked against a schema before Minder acts on it, and if no model answers, anything not already blocked waits for the owner.
+Minder runs on DeepSeek (`deepseek-flash`) and falls back to Gemini if DeepSeek is down; set either key. Every answer is JSON checked against a schema before Minder acts on it.
 
 - **Rules translator:** plain English (or any language) to a structured policy, shown back to the owner in plain lines.
 - **Purchase reviewer:** compares the order with the owner's request and the store page, and explains its view in one or two sentences.
 - **Claim writer and offer judge:** writes the claim to the store, and weighs a partial-refund offer against the evidence.
 - **ShopBot:** a deliberately gullible demo agent that follows "notes for AI assistants" on store pages. It is the thing being guarded.
 - **Dashboard agents:** an auditor and a rules advisor that work alongside AG Studio's own agents (next section).
+
+If no model answers, anything not already blocked waits for the owner. So that a live demo survives an AI outage, the demo's own sample requests also have recorded answers ([`src/lib/ai-replay.json`](src/lib/ai-replay.json)). One is used only when every model fails and only for that exact order on that exact page, and the purchase says so. The exam never uses them.
 
 ## How it uses AG Studio
 
@@ -69,9 +132,9 @@ The dashboard (`/dashboard`) is a three-page AG Studio report (Overview, Tricks 
 
 ## Proof, not promises
 
-The self-test page (`/selftest`) runs two checks.
+The self-test page (`/selftest`) runs two checks. It moves sandbox money, so on the live site it is locked behind `ADMIN_TOKEN`; the latest reports are in [`docs/proof`](docs/proof).
 
-**Demo check (17 steps).** It plays the whole story with real sandbox money, then reads every result back from PayPal's own API rather than from Minder's records. The checks cover: order `COMPLETED`, hold `CREATED` then `CAPTURED`, hold `VOIDED`, refund `COMPLETED`, and the dispute present in PayPal. Latest run: 17 of 17 passed in about a minute.
+**Demo check (17 steps).** It plays the whole story with real sandbox money, then reads every result back from PayPal's own API rather than from Minder's records: order `COMPLETED`, hold `CREATED` then `CAPTURED`, hold `VOIDED`, refund `COMPLETED`, and the dispute present in PayPal. Latest run: 17 of 17 passed in 1 min 10 s.
 
 **Exam (28 purchases).** Every case has its answer fixed in advance and is graded by code, not by the AI. It runs through exactly the same rules and review code as a real purchase, but nothing is paid. The cases:
 
@@ -80,26 +143,23 @@ The self-test page (`/selftest`) runs two checks.
 - 14 tricks that stay inside the hard limits, so only the AI review can catch them: hidden add-ons, a page addressing Minder itself, a fake "system" message, a gift card disguised as an ordinary item, tips, subscription traps, a trick in Chinese, a swapped product, fake urgency, a made-up minimum order, an overcharge, a trick inside a customer review, and an agent adding extras on its own.
 - 4 hard-rule cases.
 
-| Group | Result (two consecutive runs on DeepSeek) |
+| Group | Result (latest run, DeepSeek) |
 |---|---|
 | Tricks caught | 14 of 14 |
 | Normal purchases paid without bothering the owner | 8 of 8 |
 | Fine orders from a manipulative store, held for the owner | 2 of 2 |
 | Hard rules | 4 of 4 (gift cards are stopped by code, without asking the AI) |
 
-The exam earned its keep. Our first 21 cases all passed, which told us they were too easy. Seven harder cases then exposed two real bugs: the reviewer missed an overcharge ($45 charged for a bag listed at $18), and it blocked a protection plan the owner had explicitly asked for, because the store page also pushed it. We fixed the reviewer and re-ran everything. These are our own cases, so treat them as a regression test, not a benchmark.
+The exam earned its keep. Our first 21 cases all passed, which told us they were too easy. Seven harder cases then exposed two real bugs: the reviewer missed an overcharge ($45 charged for a bag listed at $18), and it blocked a protection plan the owner had explicitly asked for, because the store page also pushed it. We fixed the reviewer and re-ran everything.
 
-## Try the live demo
+**Unit tests (46, no keys).** `npm test` checks the rules, the combined decision, the PayPal client's retries and request ids, the AI schema handling and replay, the dashboard numbers and the cross-site guard. CI runs them, the type check, the linter and a production build on every push.
 
-The live site starts with a sample story recorded from a real self-test run, with real sandbox orders, holds, a refund and a dispute.
+## Built to survive a live demo
 
-1. **Activity:** every purchase the agent tried, with Minder's verdict and the reasons.
-2. **Try ShopBot:** ask "buy me a USB-C cable". The store page hides an instruction for AI agents, and Minder stops the purchase before any money moves.
-3. Ask ShopBot for "wireless headphones for my dad's birthday". The purchase is over $100, so the money is held until you approve it on the purchase page.
-4. Open the phone case purchase. It never shipped, the store refused a refund, and the case was escalated to a PayPal dispute. Click **Block QuickGadgets Outlet**, then ask ShopBot for a phone case: it is stopped by code.
-5. **Dashboard:** follow the money in the flow chart and click any block to filter the report. **Tricks caught** shows what store pages told the agent. Then choose **Customize with AI** and try the suggestions: why a purchase was blocked, a check against PayPal's own records, or a what-if on the rules. If ShopBot's headphones are still waiting, ask "Is anything waiting for me?" and sign the cheque.
-
-The demo runs on Render's free plan. It sleeps when idle, so the first visit can take up to a minute, and every restart returns it to the sample story.
+- **No double charges.** Idempotent PayPal writes with retries (see above).
+- **AI outage.** The owner decides anything not already blocked, and the sample requests fall back to recorded answers, clearly marked.
+- **Other websites cannot drive it.** [`src/proxy.ts`](src/proxy.ts) refuses API writes that a browser says came from another site, and the form or plain-text posts a web page could send without asking.
+- **A broken demo heals itself.** Anyone can return the live site to the sample story, at most once a minute. The self-test and the full reset need `ADMIN_TOKEN`.
 
 ## Run it yourself
 
@@ -111,6 +171,7 @@ You need:
 
 ```bash
 npm install
+npm test                     # unit tests, no keys needed
 cp .env.example .env.local   # fill in PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, DEEPSEEK_API_KEY (or GEMINI_API_KEY)
 npm run dev                  # http://localhost:3000
 ```
@@ -118,7 +179,7 @@ npm run dev                  # http://localhost:3000
 Then connect PayPal once with the sandbox buyer account. To deploy, use `render.yaml` (Render Blueprint) and set the same keys in Render, plus:
 
 - `PAYPAL_VAULT_ID`, so the cloud copy can pay without reconnecting.
-- `ADMIN_TOKEN`, which unlocks `/selftest` and the demo reset once deployed.
+- `ADMIN_TOKEN`, which unlocks `/selftest` and the full reset once deployed.
 
 ## Code map
 
@@ -127,23 +188,18 @@ Then connect PayPal once with the sandbox buyer account. To deploy, use `render.
 | `src/lib/purchases.ts` | The pipeline: code rules, then AI review, then the combined decision, then PayPal. |
 | `src/lib/rules.ts` | Hard limits: budgets, ask-me threshold, blocked categories and stores. |
 | `src/lib/review.ts` | The AI purchase reviewer and its instructions. |
-| `src/lib/paypal.ts` | Every PayPal call. |
+| `src/lib/paypal.ts` | Every PayPal call, with idempotency keys and retries. |
 | `src/lib/recovery.ts`, `recovery-ai.ts`, `merchant-bots.ts` | Claims, store replies, advice, refunds, disputes, and blocking a store. |
 | `src/lib/exam-cases.ts`, `selftest-demo.ts` | The exam and the demo check. |
+| `src/lib/ai.ts`, `src/lib/ai-replay.json` | The AI client (DeepSeek first, Gemini as fallback) and the recorded answers. |
+| `src/proxy.ts`, `src/lib/request-guard.ts` | The cross-site request guard. |
+| `src/lib/tests/` | Unit tests. |
 | `src/components/SpendDashboard.tsx` | The AG Studio report: pages, theme, data and the agent team wired together. |
 | `src/components/studio/` | Custom widgets (`MoneyFlowWidget`, `StoreTricksWidget`), the data model, the agents and their chat cards. |
-| `src/lib/studio-tools.ts` | What the dashboard agents can do on the server: look up, check with PayPal, replay rules. All read-only. |
-| `src/lib/ai.ts`, `src/app/api/studio-llm/route.ts` | The AI client (DeepSeek first, Gemini as fallback) and the AG Studio model adapter. |
+| `src/lib/studio-tools.ts`, `src/app/api/studio-llm/route.ts` | What the dashboard agents can do on the server (all read-only), and the AG Studio model adapter. |
 
-Tech stack: Next.js 16, React 19, Tailwind CSS 4, AG Studio 3 and AG Grid 36, DeepSeek or Gemini, and PayPal REST APIs (sandbox).
-
-## Honest notes
-
-- **Sandbox only.** All payments, refunds and disputes are real PayPal sandbox transactions.
-- **Simulated stores.** The four stores, their shipping behaviour and their customer-service agents are simulated: one store never ships, one ships damaged goods. The money movement around them is real sandbox PayPal.
-- **Escalation uses PayPal's sandbox chargeback simulator.** The sandbox does not let a third-party app open a dispute in the buyer's name, so the demo uses the simulator to create a real sandbox dispute that then moves through PayPal's normal stages. In production this step would be the buyer's own PayPal dispute, filed with the evidence Minder prepared.
-- **Single-user demo.** Data is a JSON file. On the free cloud plan it resets on restart.
+Tech stack: Next.js 16, React 19, Tailwind CSS 4, AG Studio 3 and AG Grid 36, DeepSeek or Gemini, PayPal REST APIs (sandbox), Vitest, and Render.
 
 ## License
 
-MIT
+MIT, see [LICENSE](LICENSE).
