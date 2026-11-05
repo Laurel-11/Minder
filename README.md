@@ -4,7 +4,7 @@
 
 <p align="center">
   <b>Your AI agent shops for you, and some store pages are written to trick it.</b><br>
-  Minder checks every purchase before PayPal moves a cent, holds big ones for your signature,<br>
+  Minder checks every purchase before PayPal moves a cent, holds big ones for your signature,
   and gets your money back through PayPal when a paid order goes wrong.
 </p>
 
