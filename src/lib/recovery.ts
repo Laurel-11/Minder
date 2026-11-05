@@ -6,10 +6,12 @@ import { deliveryNow, isLate } from "./delivery";
 import { log } from "./log";
 import { merchantReply } from "./merchant-bots";
 import { usd, toValue } from "./money";
-import { acceptClaim, CHARGEBACK_REASON, getDispute, refundCapture, simulateChargeback } from "./paypal";
+import { disputeInWords, outcomeInWords } from "./case-money";
+import { CHARGEBACK_REASON, getDispute, simulateChargeback } from "./paypal";
 import { PurchaseError } from "./purchases";
 import { judgeOffer, writeClaim } from "./recovery-ai";
 import { findBlockedMerchant } from "./rules";
+import { storeAnswersDispute, storeRefunds } from "./store-agent";
 import type { CaseProblem, Purchase, RecoveryCase } from "./types";
 
 const PAID = new Set(["paid", "approved_by_owner"]);
@@ -93,11 +95,13 @@ export async function resolveCase(caseId: string, action: "accept" | "escalate")
   const messages = [...c.messages];
 
   if (action === "accept" && offer && offer.kind !== "none") {
-    const r = await refundCapture(p.paypal.captureId!, { currency_code: "USD", value: toValue(offer.amount) }, `Refund from ${p.request.merchant.name}, agreed with your Minder agent`);
+    messages.push({ from: "owner", at: now, text: `You accepted ${usd(offer.amount)}.` });
+    // The store pays the refund, not Minder: its agent issues it through PayPal's Agent Toolkit.
+    const r = await storeRefunds({ store: p.request.merchant.name, captureId: p.paypal.captureId!, amount: offer.amount, reason: c.problem === "damaged" ? "item arrived damaged" : "order never arrived" });
     patch.refund = { refundId: r.refundId, amount: offer.amount, status: r.status };
     patch.status = "refunded";
-    messages.push({ from: "owner", at: now, text: `You accepted ${usd(offer.amount)}.` });
-    messages.push({ from: "paypal", at: now, text: `PayPal refunded ${usd(offer.amount)} to you (refund ${r.refundId}, ${r.status.toLowerCase()}).` });
+    messages.push({ from: "merchant", at: now, text: r.action.message });
+    messages.push({ from: "paypal", at: now, text: `PayPal refunded ${usd(offer.amount)} to you (refund ${r.refundId}, ${r.status.toLowerCase()}). ${p.request.merchant.name}'s agent sent it with PayPal's Agent Toolkit.` });
   } else {
     const note = `${c.problem === "not_delivered" ? "Paid order never shipped" : "Item arrived damaged"}. ${c.messages[0].text}`.slice(0, 200);
     const { disputeId } = await simulateChargeback({ captureId: p.paypal.captureId!, amount: { currency_code: "USD", value: toValue(p.total) }, note, reasonCode: CHARGEBACK_REASON[c.problem] });
@@ -117,39 +121,70 @@ export async function resolveCase(caseId: string, action: "accept" | "escalate")
   return updated;
 }
 
-const DISPUTE_WORDS: Record<string, string> = {
-  OPEN: "PayPal opened the case.",
-  WAITING_FOR_SELLER_RESPONSE: "PayPal is waiting for the store to respond.",
-  WAITING_FOR_BUYER_RESPONSE: "PayPal is waiting for your response.",
-  UNDER_REVIEW: "PayPal is reviewing the case and decides who gets the money.",
-  RESOLVED: "PayPal resolved the case.",
-  OTHER: "PayPal is handling the case.",
-};
-export const disputeInWords = (status: string) => DISPUTE_WORDS[status] ?? DISPUTE_WORDS.OTHER;
+export { disputeInWords };
 
 export async function refreshDispute(caseId: string): Promise<RecoveryCase> {
   const db = await readDb();
   const c = db.cases.find((x) => x.id === caseId);
   if (!c?.dispute) throw new PurchaseError("This case has no PayPal dispute.", 409);
   const d = await getDispute(c.dispute.disputeId);
+  const outcome = (d as { dispute_outcome?: { outcome_code?: string; amount_refunded?: { value?: string } } }).dispute_outcome;
   return updateDb((db2) => {
     const x = db2.cases.find((k) => k.id === caseId)!;
+    if (x.status === "closed") return x;
     const changed = x.dispute!.status !== d.status;
-    x.dispute = { disputeId: d.dispute_id, status: d.status, stage: d.dispute_life_cycle_stage, updatedAt: new Date().toISOString() };
-    if (changed) x.messages.push({ from: "paypal", at: demoNow(db2).toISOString(), text: disputeInWords(d.status) });
+    const resolved = d.status === "RESOLVED";
+    const amount = Number(outcome?.amount_refunded?.value ?? d.dispute_amount?.value ?? 0) || undefined;
+    x.dispute = {
+      disputeId: d.dispute_id,
+      status: d.status,
+      stage: d.dispute_life_cycle_stage,
+      updatedAt: new Date().toISOString(),
+      ...(resolved && { outcome: outcome?.outcome_code ?? "RESOLVED", amount }),
+    };
+    if (resolved) {
+      x.status = "closed";
+      x.messages.push({ from: "paypal", at: demoNow(db2).toISOString(), text: outcomeInWords(outcome?.outcome_code, amount ? usd(amount) : "") });
+    } else if (changed) x.messages.push({ from: "paypal", at: demoNow(db2).toISOString(), text: disputeInWords(d.status) });
     return x;
   });
 }
 
-/** Demo control: play the store and accept the claim, as PayPal would require once the deadline passes. */
-export async function demoStoreAcceptsClaim(caseId: string): Promise<RecoveryCase> {
+const answering = new Set<string>();
+
+/**
+ * The store's turn in a PayPal dispute. On the live site PayPal's webhook starts this as soon as PayPal passes the
+ * case to the store; the case page also has a button for it. The store's agent reads the dispute and answers it
+ * with PayPal's Agent Toolkit.
+ */
+export async function storeAnswersCase(caseId: string): Promise<RecoveryCase> {
   const db = await readDb();
   const c = db.cases.find((x) => x.id === caseId);
   if (!c?.dispute) throw new PurchaseError("This case has no PayPal dispute.", 409);
-  await acceptClaim(c.dispute.disputeId, "The order was never shipped. We accept the buyer's claim.");
-  await new Promise((r) => setTimeout(r, 3000));
-  return refreshDispute(caseId);
+  if (answering.has(caseId)) throw new PurchaseError("The store's agent is already answering.", 409);
+  const p = db.purchases.find((x) => x.id === c.purchaseId)!;
+  answering.add(caseId);
+  try {
+    const r = await storeAnswersDispute({ store: p.request.merchant.name, disputeId: c.dispute.disputeId, problem: c.problem });
+    if (!r.answered) {
+      throw new PurchaseError(
+        r.status === "RESOLVED" ? "PayPal has already closed this case." : `PayPal has not passed the case to the store yet (${r.status.toLowerCase().replaceAll("_", " ")}). Try again in a minute.`,
+        409,
+      );
+    }
+    await updateDb((d) => {
+      const x = d.cases.find((k) => k.id === caseId)!;
+      x.messages.push({ from: "merchant", at: demoNow(d).toISOString(), text: `${r.action.message} (answered in PayPal with the Agent Toolkit)` });
+    });
+    await new Promise((res) => setTimeout(res, 3000));
+    return refreshDispute(caseId);
+  } finally {
+    answering.delete(caseId);
+  }
 }
+
+/** Kept for the case page's button. */
+export const demoStoreAcceptsClaim = storeAnswersCase;
 
 /**
  * Learn from a bad order: put the store on the owner's blocked list, so the agent can never pay it again.

@@ -1,8 +1,6 @@
 import { shortDateTime } from "@/lib/format";
-import { disputeWon } from "@/lib/case-money";
+import { disputeInWords, disputeWon, outcomeInWords } from "@/lib/case-money";
 import { usd } from "@/lib/money";
-import { outcomeInWords } from "@/lib/paypal-events";
-import { disputeInWords } from "@/lib/recovery";
 import type { Offer, RecoveryCase } from "@/lib/types";
 import { BlockStore } from "./BlockStore";
 import { CaseActions } from "./CaseActions";

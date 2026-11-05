@@ -66,7 +66,7 @@ export function CaseActions({
           </button>
           {canPlayStore && (
             <button onClick={() => run("demo")} disabled={busy !== null} className="rounded-lg px-3 py-2 text-sm text-muted underline underline-offset-2 disabled:opacity-50">
-              {busy === "demo" ? "Playing the store…" : "Demo: play the store and accept the claim"}
+              {busy === "demo" ? "The store's agent is answering…" : "Let the store's agent answer now"}
             </button>
           )}
         </div>

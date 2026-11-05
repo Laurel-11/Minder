@@ -1,4 +1,5 @@
 // PayPal calls this when money moves or a dispute changes. Every delivery is checked with PayPal before it is used.
+import { after } from "next/server";
 import { receiveWebhook } from "@/lib/paypal-events";
 
 export const dynamic = "force-dynamic";
@@ -14,5 +15,6 @@ export async function POST(request: Request) {
     transmissionSig: h("paypal-transmission-sig"),
     transmissionTime: h("paypal-transmission-time"),
   });
+  if (result.followUp) after(result.followUp);
   return Response.json(result.body, { status: result.status });
 }

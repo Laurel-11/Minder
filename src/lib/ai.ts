@@ -249,3 +249,51 @@ async function geminiJson<T>(input: JsonInput, errors: string[]): Promise<{ data
   }
   return null;
 }
+
+// ---------- Function calling: the model picks a tool and fills in its arguments ----------
+
+export type ToolSpec = { name: string; description: string; parameters: Record<string, unknown> };
+export type PickedTool = { name: string; args: Record<string, unknown>; model: string };
+
+/**
+ * Ask DeepSeek to call exactly one of the given tools. Returns null when no model answers, so the caller can
+ * fall back to a fixed action. Used by the demo stores' agent, whose tools are PayPal's Agent Toolkit tools.
+ */
+export async function pickTool(input: { system: string; prompt: string; tools: ToolSpec[]; timeoutMs?: number }): Promise<PickedTool | null> {
+  if (!env.aiProviders.includes("deepseek")) return null;
+  try {
+    const res = await fetchWithTimeout(
+      `${DEEPSEEK}/chat/completions`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.deepseekApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: env.deepseekModel,
+          messages: [
+            { role: "system", content: input.system },
+            { role: "user", content: input.prompt },
+          ],
+          tools: input.tools.map((t) => ({ type: "function", function: t })),
+          tool_choice: "required",
+          temperature: 0.1,
+          max_tokens: 800,
+          thinking: { type: "disabled" },
+        }),
+      },
+      input.timeoutMs ?? 30_000,
+    );
+    const reply = (await res.json().catch(() => ({}))) as {
+      choices?: { message?: { tool_calls?: { function?: { name?: string; arguments?: string } }[] } }[];
+      error?: { message?: string };
+    };
+    const call = reply.choices?.[0]?.message?.tool_calls?.[0]?.function;
+    if (!res.ok || !call?.name) {
+      log("ai.tool_failed", { status: res.status, error: reply.error?.message?.slice(0, 200) });
+      return null;
+    }
+    return { name: call.name, args: JSON.parse(call.arguments || "{}"), model: env.deepseekModel };
+  } catch (e) {
+    log("ai.tool_failed", { error: (e as Error).message });
+    return null;
+  }
+}

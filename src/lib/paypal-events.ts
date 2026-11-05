@@ -7,7 +7,8 @@ import { env } from "./env";
 import { log } from "./log";
 import { usd } from "./money";
 import { createWebhook, listWebhookEventTypes, listWebhooks, setWebhookEvents, verifyWebhookSignature, type WebhookHeaders } from "./paypal";
-import { disputeInWords } from "./recovery";
+import { disputeInWords, outcomeInWords } from "./case-money";
+import { storeAnswersCase } from "./recovery";
 import type { Db, PayPalEvent, Purchase, RecoveryCase } from "./types";
 
 export const WEBHOOK_EVENTS = [
@@ -84,14 +85,6 @@ function findPurchase(db: Db, ids: (string | undefined)[]): Purchase | undefined
   return db.purchases.find((p) => [p.paypal.captureId, p.paypal.authorizationId, p.paypal.orderId].some((id) => id && wanted.includes(id)));
 }
 
-const OUTCOME: Record<string, (amount: string) => string> = {
-  RESOLVED_BUYER_FAVOUR: (a) => `PayPal decided in your favour${a ? `: ${a} goes back to you` : ""}.`,
-  RESOLVED_SELLER_FAVOUR: () => "PayPal decided in the store's favour.",
-  RESOLVED_WITH_PAYOUT: (a) => `PayPal paid you${a ? ` ${a}` : ""} to settle the case.`,
-  ACCEPTED: (a) => `The store accepted your claim${a ? `: ${a} goes back to you` : ""}.`,
-  CANCELED_BY_BUYER: () => "The case was withdrawn.",
-};
-export const outcomeInWords = (code?: string, amount = "") => (code && OUTCOME[code] ? OUTCOME[code](amount) : "PayPal closed the case.");
 
 /**
  * Apply one verified event to the data: record it, link it to the purchase or case it is about,
@@ -172,7 +165,8 @@ export function applyPayPalEvent(db: Db, e: RawEvent, receivedAt: string): PayPa
           }),
         };
         // Minder already told the owner it opened the case, so only news goes into the conversation.
-        if (resolved || before !== kase.dispute.status) kase.messages.push({ from: "paypal", at, text: resolved ? summary : disputeInWords(kase.dispute.status) });
+        const alreadyClosed = kase.status === "closed";
+        if (!alreadyClosed && (resolved || before !== kase.dispute.status)) kase.messages.push({ from: "paypal", at, text: resolved ? summary : disputeInWords(kase.dispute.status) });
         if (resolved) kase.status = "closed";
       }
       break;
@@ -210,7 +204,7 @@ export function applyPayPalEvent(db: Db, e: RawEvent, receivedAt: string): PayPa
 
 // ---------- One delivery ----------
 
-export type WebhookResult = { status: number; body: Record<string, unknown> };
+export type WebhookResult = { status: number; body: Record<string, unknown>; followUp?: () => Promise<void> };
 
 /** Check a delivery with PayPal, then apply it. A failure PayPal can retry answers 5xx so PayPal sends it again. */
 export async function receiveWebhook(raw: string, headers: WebhookHeaders): Promise<WebhookResult> {
@@ -244,7 +238,22 @@ export async function receiveWebhook(raw: string, headers: WebhookHeaders): Prom
     return { status: 400, body: { error: "PayPal did not confirm this signature." } };
   }
 
-  const applied = await updateDb((db) => applyPayPalEvent(db, event, new Date().toISOString()));
+  const { applied, storeTurn } = await updateDb((db) => {
+    const applied = applyPayPalEvent(db, event, new Date().toISOString());
+    const c = applied?.caseId ? db.cases.find((x) => x.id === applied.caseId) : undefined;
+    // PayPal passed the dispute to the store: the store's agent answers it on its own, after this reply.
+    return { applied, storeTurn: c?.status === "escalated" && c.dispute?.status === "WAITING_FOR_SELLER_RESPONSE" ? c.id : undefined };
+  });
   log("paypal.webhook", { id: event.id, type: event.event_type, purchase: applied?.purchaseId, case: applied?.caseId, duplicate: !applied });
-  return { status: 200, body: { received: true, duplicate: !applied } };
+  return {
+    status: 200,
+    body: { received: true, duplicate: !applied },
+    followUp: storeTurn
+      ? () =>
+          storeAnswersCase(storeTurn).then(
+            () => undefined,
+            (e: Error) => log("store_agent.failed", { caseId: storeTurn, error: e.message }),
+          )
+      : undefined,
+  };
 }
