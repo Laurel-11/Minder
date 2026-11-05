@@ -7,6 +7,7 @@
 - **Live demo:** https://minder-2hey.onrender.com. No login needed. It runs on Render's free plan, so the first visit after a quiet spell can take up to a minute.
 - **Video:** _link added after recording_
 - **Judges:** the [3-minute tour](#try-it-in-3-minutes) shows every feature on the live site.
+- **More:** [How it works](https://minder-2hey.onrender.com/how-it-works) on the live site, the [threat model](SECURITY.md), and [every AI role](docs/AI.md).
 
 Built for the PayPal AI Hackathon. Sandbox only: no real money moves.
 
@@ -25,6 +26,13 @@ Minder closes that gap. It checks every purchase before the money moves, and whe
 | It arrives damaged | Covered: Significantly Not as Described | Minder files the claim with evidence; you choose the refund or the dispute |
 
 PayPal decides each claim itself; the middle column summarizes its published terms.
+
+Why now:
+
+- Asked to buy an Apple Watch, an AI browser bought one from a fake store and filled in the saved card without asking ([Guardio Labs, August 2025](https://guard.io/labs/scamlexity-we-put-agentic-ai-browsers-to-the-test-they-clicked-they-paid-they-failed)).
+- In Microsoft's simulated marketplace, prompt injection redirected AI agents' payments to manipulative sellers; the researchers concluded that oversight is critical for high-stakes transactions ([The Register, November 2025](https://www.theregister.com/2025/11/06/microsoft_unveils_the_magentic_marketplace/)).
+- PayPal is opening checkout to AI agents, with buyer protection and dispute resolution on the merchant side ([PayPal, October 2025](https://newsroom.paypal-corp.com/2025-10-28-PayPal-Launches-Agentic-Commerce-Services-to-Power-AI-Driven-Shopping)). Minder adds the buyer's side: stopping the order the agent was talked into.
+- Prompt injection is the top risk for LLM applications, and has no fool-proof fix ([OWASP LLM01:2025](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)). Minder follows OWASP's mitigations; see the [threat model](SECURITY.md).
 
 ## With and without Minder
 
@@ -64,6 +72,25 @@ Minder sits between the agent and the owner's PayPal, and covers the whole life 
 | **2. AI review** | Everything the code allows is checked against the owner's own words. Store page text is treated as untrusted data: extra items, bigger quantities, swapped products and overcharges are blocked. A store that tries to steer AI agents is held for the owner even when the order itself is fine. | It is tested against 28 known attacks and normal purchases (see [Proof](#proof-not-promises)). |
 | **3. PayPal recovery** | After payment, Minder watches the delivery. If the order never ships or arrives damaged, it writes the claim with an evidence timeline, negotiates with the store's agent, and recommends accepting the offer or escalating. Accepting issues a PayPal refund; escalating opens a PayPal dispute. Afterwards it offers to block the store, so it can never be paid again. | Whatever slips through the first two layers can still be recovered. |
 
+```mermaid
+flowchart LR
+  AGENT["Shopping agent<br/>ShopBot, or any agent over MCP"]
+  OWNER(["Owner"])
+  CHECK["Minder, before payment<br/>1. owner's rules, in code<br/>2. AI review, page text untrusted"]
+  RECOVER["Minder, after payment<br/>3. claims, negotiation, disputes"]
+  PAYPAL[("PayPal sandbox<br/>Vault, Orders, Payments,<br/>Disputes, Webhooks")]
+  STORE["Store's agent<br/>PayPal Agent Toolkit"]
+
+  AGENT -- "asks to pay" --> CHECK
+  OWNER -- "Pay or Decline a hold" --> CHECK
+  CHECK -- "approve: CAPTURE<br/>hold: AUTHORIZE" --> PAYPAL
+  PAYPAL -- "webhooks, signature checked" --> RECOVER
+  OWNER -- "accept or escalate" --> RECOVER
+  RECOVER -- "claim" --> STORE
+  RECOVER -- "escalate: dispute" --> PAYPAL
+  STORE -- "refund, accept claim" --> PAYPAL
+```
+
 Every purchase ends in one of three outcomes:
 
 - **Approve:** paid immediately.
@@ -75,7 +102,7 @@ Every purchase ends in one of three outcomes:
 | Criterion | Where to look |
 |---|---|
 | Technological implementation | Seven PayPal API areas plus PayPal's Agent Toolkit ([details](#how-it-uses-paypal)): every write idempotent and safely retried, and every webhook signature checked with PayPal. AI in seven roles, each answer checked against a schema. 63 unit tests that need no keys, run by CI on every push. |
-| Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, and the AG Studio dashboard is themed as part of the product. |
+| Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, the AG Studio dashboard is themed as part of the product, and [How it works](https://minder-2hey.onrender.com/how-it-works) explains the gap and the flow on one page. |
 | Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. |
 | Innovation | Buyer protection rethought for agents: prevention where Buyer Protection cannot reach, and automatic claims where it can. One lifecycle: code limits and AI review before payment, a PayPal hold at payment, then claim, agent-to-agent negotiation, refund or dispute, and a store block. Most agent spending guards we looked at stop at checkout. |
 | Presentation | The video, the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
@@ -228,6 +255,7 @@ Then connect PayPal once with the sandbox buyer account. To deploy, use `render.
 | `src/lib/store-agent.ts` | The stores' agents on PayPal's Agent Toolkit. |
 | `src/lib/mcp-server.ts`, `src/app/api/mcp/route.ts` | Minder as an MCP server. |
 | `src/lib/trick.ts` | The trick-it game. |
+| `SECURITY.md`, `docs/AI.md` | The threat model, and every AI role with its limits. |
 | `src/lib/recovery.ts`, `recovery-ai.ts`, `merchant-bots.ts` | Claims, store replies, advice, refunds, disputes, and blocking a store. |
 | `src/lib/exam-cases.ts`, `selftest-demo.ts` | The exam and the demo check. |
 | `src/lib/ai.ts`, `src/lib/ai-replay.json` | The AI client (DeepSeek first, Gemini as fallback) and the recorded answers. |

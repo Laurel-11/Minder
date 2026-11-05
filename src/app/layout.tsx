@@ -29,6 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">{children}</main>
         <footer className="flex flex-wrap justify-center gap-x-2 py-6 text-center text-xs text-muted">
           <span>Sandbox demo. No real money moves.</span>
+          <Link href="/status" className="underline underline-offset-2">
+            System status
+          </Link>
           <ResetDemo />
         </footer>
       </body>
