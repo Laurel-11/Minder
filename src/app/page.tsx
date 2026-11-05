@@ -5,7 +5,7 @@ import { DemoClock } from "@/components/DemoClock";
 import { PurchaseSlip } from "@/components/PurchaseSlip";
 import { demoNow } from "@/lib/clock";
 import { withAndWithout } from "@/lib/dashboard-data";
-import { readDb } from "@/lib/db";
+import { readSharedDb } from "@/lib/db";
 import { deliveryNow, isLate } from "@/lib/delivery";
 import { usd } from "@/lib/money";
 import { checkDeliveries } from "@/lib/recovery";
@@ -22,7 +22,7 @@ const banners: Record<string, { tone: string; text: string }> = {
 
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await checkDeliveries();
-  const db = await readDb();
+  const db = await readSharedDb();
   const connect = (await searchParams).connect;
   const banner = typeof connect === "string" ? banners[connect] : undefined;
   const waitingList = db.purchases.filter((p) => p.status === "awaiting_owner");

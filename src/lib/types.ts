@@ -107,6 +107,8 @@ export type Purchase = {
   paypal: { orderId?: string; authorizationId?: string; captureId?: string; error?: string };
   owner?: { decision: "approve" | "decline"; at: string };
   delivery?: Delivery;
+  /** "trick": made on the trick-it page with a visitor's own store note. Kept out of shared lists and totals. */
+  source?: "trick";
 };
 
 export type CaseProblem = "not_delivered" | "damaged";
@@ -170,6 +172,8 @@ export type Db = {
   pendingSetupTokens: { id: string; createdAt: string }[];
   /** Newest first: what PayPal's webhooks told Minder. */
   paypalEvents?: PayPalEvent[];
+  /** Scores for the trick-it page. */
+  trickBoard?: { attempts: number; fooled: number; caught: number; slipped: number; paidOnSlips: number };
   /** Set when PayPal reports that Maya removed Minder's saved payment permission. Minder pays nothing until she reconnects. */
   vaultRevokedAt?: string;
 };

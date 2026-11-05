@@ -1,7 +1,26 @@
 import Link from "next/link";
 import { ShopBotChat } from "@/components/ShopBotChat";
+import { TrickLab, type TrickTarget } from "@/components/TrickLab";
+import { findProduct } from "@/lib/catalog";
+import { readDb } from "@/lib/db";
+import { TRICK_TARGETS } from "@/lib/trick";
 
-export default function AgentPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AgentPage() {
+  const db = await readDb();
+  const targets: TrickTarget[] = TRICK_TARGETS.map((t) => {
+    const hit = findProduct(t.productId)!;
+    return {
+      productId: t.productId,
+      request: t.request,
+      example: t.example,
+      product: hit.product.name,
+      price: hit.product.price,
+      store: hit.store.name,
+      others: hit.store.products.filter((p) => p.id !== t.productId).map((p) => `${p.name} ($${p.price})`),
+    };
+  });
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -12,6 +31,7 @@ export default function AgentPage() {
         </p>
       </div>
       <ShopBotChat />
+      <TrickLab targets={targets} initialBoard={db.trickBoard ?? { attempts: 0, fooled: 0, caught: 0, slipped: 0, paidOnSlips: 0 }} />
     </div>
   );
 }

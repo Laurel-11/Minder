@@ -66,3 +66,12 @@ export function updateDb<T>(fn: (db: Db) => T | Promise<T>): Promise<T> {
     return result;
   });
 }
+
+/**
+ * The data everyone sees. Purchases from the trick-it page are left out of shared lists and totals:
+ * their store notes are free text written by visitors.
+ */
+export async function readSharedDb(): Promise<Db> {
+  const db = await readDb();
+  return { ...db, purchases: db.purchases.filter((p) => p.source !== "trick") };
+}

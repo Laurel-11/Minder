@@ -1,7 +1,7 @@
 // ShopBot: a deliberately naive demo shopping agent. It shops the demo stores and asks Minder for
 // permission to pay through Minder's public agent API, exactly like a third-party agent would.
 import { generateJson, type Schema } from "./ai";
-import { findProduct, productPageText, STORES } from "./catalog";
+import { findProduct, productPageText, STORES, type Product } from "./catalog";
 import { env } from "./env";
 import { fetchWithTimeout } from "./http";
 import { log } from "./log";
@@ -67,27 +67,33 @@ const words = (text: string) => text.toLowerCase().match(/[a-z0-9]+/g)?.filter((
  * ShopBot "searches" the stores, then reads the full pages (including seller notes) of the best matches,
  * the way a browsing agent would. Products it never opens are only seen as a one-line listing.
  */
-function catalogText(request: string): string {
+type PageOverride = { productId: string; sellerNote: string };
+const pageOf = (p: Product, override?: PageOverride) => productPageText(override && p.id === override.productId ? { ...p, sellerNote: override.sellerNote } : p);
+
+function catalogText(request: string, override?: PageOverride): string {
   const want = new Set(words(request));
   const scored = STORES.flatMap((s) => s.products.map((p) => ({ p, score: words(`${p.name} ${p.description} ${p.category}`).filter((w) => want.has(w)).length })));
   const opened = new Set(scored.filter((x) => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 4).map((x) => x.p.id));
+  if (override) opened.add(override.productId);
   return STORES.map(
     (s) =>
       `STORE ${s.slug} (${s.name}): ${s.tagline}\n${s.products
-        .map((p) => (opened.has(p.id) ? `  [${p.id}] PAGE: ${productPageText(p)}` : `  [${p.id}] ${p.name}, $${p.price}`))
+        .map((p) => (opened.has(p.id) ? `  [${p.id}] PAGE: ${pageOf(p, override)}` : `  [${p.id}] ${p.name}, $${p.price}`))
         .join("\n")}`,
   ).join("\n\n");
 }
 
-export async function runShopBot(ownerRequest: string): Promise<ShopBotRun> {
+/** `override` puts a visitor's own note on one product page (the trick-it page). */
+export async function runShopBot(ownerRequest: string, override?: PageOverride): Promise<ShopBotRun> {
   const run: ShopBotRun = { request: ownerRequest, steps: [`Reading ${STORES.length} stores`], agentMessage: "" };
 
   const { data: plan } = await generateJson<AgentPlan>({
     system: SYSTEM,
-    prompt: `Owner's request: "${ownerRequest}"\n\nStores:\n${catalogText(ownerRequest)}`,
+    prompt: `Owner's request: "${ownerRequest}"\n\nStores:\n${catalogText(ownerRequest, override)}`,
     schema,
     temperature: 0.3,
-    replay: { key: `shopbot|${ownerRequest}`, label: `ShopBot: "${ownerRequest.trim()}"` },
+    // A visitor's trick is new every time: no recorded answer stands in for it.
+    replay: override ? undefined : { key: `shopbot|${ownerRequest}`, label: `ShopBot: "${ownerRequest.trim()}"` },
   });
 
   const lines = (plan.items ?? [])
@@ -114,7 +120,7 @@ export async function runShopBot(ownerRequest: string): Promise<ShopBotRun> {
     currency: "USD",
     items: lines.map((l) => ({ name: l.hit!.product.name, unitPrice: l.hit!.product.price, quantity: l.quantity, category: l.hit!.product.category })),
     justification: plan.justification,
-    pageExcerpt: lines.map((l) => productPageText(l.hit!.product)).join("\n"),
+    pageExcerpt: lines.map((l) => pageOf(l.hit!.product, override)).join("\n"),
   };
 
   run.steps.push("Asking Minder for permission to pay");

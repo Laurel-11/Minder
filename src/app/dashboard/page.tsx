@@ -4,7 +4,7 @@ import { DashboardClient } from "@/components/DashboardClient";
 import { demoNow } from "@/lib/clock";
 import { buildDashboardRows, withAndWithout } from "@/lib/dashboard-data";
 import { usd } from "@/lib/money";
-import { readDb } from "@/lib/db";
+import { readSharedDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ async function loadLayout(): Promise<unknown> {
 }
 
 export default async function DashboardPage() {
-  const [db, initialState] = await Promise.all([readDb(), loadLayout()]);
+  const [db, initialState] = await Promise.all([readSharedDb(), loadLayout()]);
   const ww = withAndWithout(db.purchases, db.cases);
   const rows = buildDashboardRows(db.purchases, { policy: db.policy, now: demoNow(db), cases: db.cases });
   return (
