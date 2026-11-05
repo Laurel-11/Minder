@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { secretValues } from "./env";
 
-const LOG_FILE = path.join(process.cwd(), "logs", "app.log");
+const LOG_FILE = path.join(/* turbopackIgnore: true */ process.cwd(), "logs", "app.log");
 
 export function redact(text: string): string {
   let out = text;

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   if (!adminAllowed(request)) return adminDenied();
   const { kind, markdown } = (await request.json().catch(() => ({}))) as { kind?: string; markdown?: string };
   if ((kind !== "demo" && kind !== "exam") || typeof markdown !== "string") return Response.json({ error: "kind and markdown are required." }, { status: 400 });
-  const dir = path.join(process.cwd(), "logs");
+  const dir = path.join(/* turbopackIgnore: true */ process.cwd(), "logs");
   await fs.mkdir(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const text = markdown.slice(0, 200_000);

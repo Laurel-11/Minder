@@ -54,7 +54,7 @@ export async function generateJson<T>(input: JsonInput): Promise<{ data: T; mode
 
 // ---------- Replay: the AI's recorded answers for the demo's own requests ----------
 
-export const REPLAY_FILE = process.env.AI_REPLAY_FILE ?? path.join(process.cwd(), "src", "lib", "ai-replay.json");
+export const REPLAY_FILE = process.env.AI_REPLAY_FILE ?? path.join(/* turbopackIgnore: true */ process.cwd(), "src", "lib", "ai-replay.json");
 type ReplayEntry = { label: string; model: string; recordedAt: string; data: unknown };
 
 export const replayId = (key: string) => crypto.createHash("sha256").update(key.trim().toLowerCase()).digest("hex").slice(0, 16);

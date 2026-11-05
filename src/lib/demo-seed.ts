@@ -7,8 +7,8 @@ import { freshDb } from "./seed";
 
 export { DEMO_POLICY, DEMO_RULES_TEXT } from "./seed";
 
-const BACKUP_DIR = path.join(process.cwd(), "data", "backups");
-const STORY_FILE = path.join(process.cwd(), "src", "lib", "demo-story.json");
+const BACKUP_DIR = path.join(/* turbopackIgnore: true */ process.cwd(), "data", "backups");
+const STORY_FILE = path.join(/* turbopackIgnore: true */ process.cwd(), "src", "lib", "demo-story.json");
 
 /**
  * Back up the current data, then go back to a starting point. Keeps Maya's saved PayPal.
