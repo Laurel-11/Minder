@@ -26,7 +26,11 @@ export function CaseActions({
     setBusy(action);
     setError(null);
     const url =
-      action === "refresh" ? `/api/cases/${caseId}/refresh` : action === "demo" ? `/api/cases/${caseId}/demo-store-accepts` : `/api/cases/${caseId}/decision`;
+      action === "refresh"
+        ? `/api/cases/${caseId}/refresh`
+        : action === "demo"
+          ? `/api/cases/${caseId}/demo-store-accepts`
+          : `/api/cases/${caseId}/decision`;
     try {
       const res = await fetch(url, {
         method: "POST",

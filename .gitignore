@@ -28,3 +28,4 @@ render-*.env
 next-env.d.ts
 .vercel
 coverage/
+视频脚本.md

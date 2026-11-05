@@ -40,11 +40,14 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
       {banner && <p className={`rounded-lg px-4 py-3 text-sm ${banner.tone}`}>{banner.text}</p>}
 
       <section>
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-          Every purchase your AI agent tries to make is checked before the money moves, and chased up if the order goes wrong.
-        </h1>
+        <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">Buyer protection for the purchases your AI agent makes.</h1>
+        <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-muted">
+          PayPal protects you when an order never arrives or is not as described. But when a store page talks your agent into buying something you never asked for, the
+          order arrives exactly as described, so that protection may not help. Minder checks every purchase before the money moves, and files the claims PayPal does
+          cover when an order goes wrong.
+        </p>
         {db.purchases.length > 0 && (
-          <p className="mt-4 max-w-prose text-[15px] leading-relaxed">
+          <p className="mt-3 max-w-prose text-[15px] leading-relaxed">
             Without Minder, ShopBot would have paid <strong className="tabular-nums">{usd(ww.withoutMinder)}</strong> of Maya&apos;s money
             {ww.tricked > 0 && (
               <>

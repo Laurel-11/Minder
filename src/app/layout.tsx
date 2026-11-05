@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Minder",
-  description: "A PayPal-powered bodyguard for your AI shopping agent.",
+  description: "Buyer protection for the purchases your AI agent makes, built on PayPal.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

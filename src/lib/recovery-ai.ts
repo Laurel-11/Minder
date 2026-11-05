@@ -34,7 +34,7 @@ export async function writeClaim(input: {
   try {
     const { data, model } = await generateJson<{ claim: string; askFor: Offer }>({
       system: `You write purchase-problem claims on behalf of a shopper, addressed to the store's customer-service agent.
-Use only the facts given. Ask for a full refund when the item never arrived. When it arrived damaged, ask for a full refund unless the owner says the item still mostly works, in which case a fair partial refund is fine.`,
+Use only the facts given. Write dates exactly as the timeline shows them (month and day) and never add a year. Ask for a full refund when the item never arrived. When it arrived damaged, ask for a full refund unless the owner says the item still mostly works, in which case a fair partial refund is fine.`,
       prompt: `Store: ${p.request.merchant.name}
 Order: ${p.request.items.map((i) => `${i.quantity} x ${i.name} ${usd(i.unitPrice)}`).join("; ")}. Total ${usd(p.total)}.
 Problem: ${input.problem === "not_delivered" ? "never delivered" : "arrived damaged"}

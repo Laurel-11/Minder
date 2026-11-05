@@ -31,7 +31,7 @@ const failure = (message: string) => ({ content: [{ type: "text" as const, text:
 const purchaseUrl = (id: string) => `${env.appUrl}/purchases/${id}`;
 
 export function buildMinderMcp(limits: Limits): McpServer {
-  const server = new McpServer({ name: "minder", title: "Minder: a PayPal bodyguard for AI shopping agents", version: "1.0.0" }, { instructions: MCP_INSTRUCTIONS });
+  const server = new McpServer({ name: "minder", title: "Minder: buyer protection for AI shopping agents, on PayPal", version: "1.0.0" }, { instructions: MCP_INSTRUCTIONS });
 
   server.registerTool(
     "list_stores",

@@ -17,7 +17,7 @@ const DISPUTE_WORDS: Record<string, string> = {
   OPEN: "PayPal opened the case.",
   WAITING_FOR_SELLER_RESPONSE: "PayPal is waiting for the store to respond.",
   WAITING_FOR_BUYER_RESPONSE: "PayPal is waiting for your response.",
-  UNDER_REVIEW: "PayPal is reviewing the case and decides who gets the money.",
+  UNDER_REVIEW: "PayPal is reviewing the case.",
   RESOLVED: "PayPal resolved the case.",
   OTHER: "PayPal is handling the case.",
 };

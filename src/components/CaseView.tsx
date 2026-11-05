@@ -21,6 +21,8 @@ export function CaseView({
 }) {
   const lastOffer = c.messages.filter((m) => m.from === "merchant").at(-1)?.offer;
   const won = disputeWon(c);
+  // The store's agent answered the PayPal dispute (through PayPal's Agent Toolkit) by accepting the claim.
+  const storeAccepted = c.messages.some((m) => m.from === "merchant" && /Agent Toolkit/.test(m.text));
   const headline =
     c.status === "refunded"
       ? `${usd(c.refund?.amount ?? 0)} is back in your PayPal.`
@@ -28,8 +30,10 @@ export function CaseView({
         ? won
           ? `${c.dispute.amount ? usd(c.dispute.amount) : "Your money"} is back in your PayPal: PayPal closed the case in your favour.`
           : outcomeInWords(c.dispute.outcome)
-        : c.status === "escalated"
-          ? `Escalated to PayPal: ${disputeInWords(c.dispute?.status ?? "OPEN")}`
+        : c.status === "escalated" && storeAccepted
+          ? `${storeName} accepted your claim in PayPal. ${disputeInWords(c.dispute?.status ?? "OPEN")}`
+          : c.status === "escalated"
+            ? `Escalated to PayPal: ${disputeInWords(c.dispute?.status ?? "OPEN")}`
           : c.status === "closed"
             ? "Case closed."
             : "Minder needs your decision.";
@@ -71,7 +75,11 @@ export function CaseView({
             PayPal case <span className="font-medium">{c.dispute.disputeId}</span>. {disputeInWords(c.dispute.status)}
             {c.dispute.status === "OPEN" && " New cases take a few minutes to reach the store."}
           </p>
-          <CaseActions caseId={c.id} mode="escalated" canPlayStore={c.dispute.status === "WAITING_FOR_SELLER_RESPONSE"} />
+          <CaseActions
+            caseId={c.id}
+            mode="escalated"
+            canPlayStore={c.dispute.status === "WAITING_FOR_SELLER_RESPONSE"}
+          />
         </div>
       )}
 
