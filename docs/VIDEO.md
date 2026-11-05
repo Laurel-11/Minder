@@ -2,7 +2,7 @@
 
 <p align="center"><img src="assets/film-strip.jpg" alt="Four moments from the film: Blocked, Held until Maya signs, Refunded through PayPal, and Maya's week on the AG Studio dashboard" width="100%"></p>
 
-**Length** 2:55 · **Format** 1080p, 30 fps, English narration with burnt-in subtitles · **Watch** the YouTube link is added to the [README](../README.md#demo-video) when the video is published.
+**Length** 2:55 · **Format** 1080p, 30 fps, English narration with burnt-in subtitles · **Watch** [on YouTube](https://www.youtube.com/watch?v=rPdLauPEaNM)
 
 ## The idea
 

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://minder-2hey.onrender.com"><b>Live demo</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="https://minder-2hey.onrender.com/agent#trick"><b>Try to trick it</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="#demo-video"><b>Demo video</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="#try-it-in-3-minutes"><b>3&#8209;minute tour</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="#how-it-maps-to-the-judging-criteria"><b>For judges</b></a>
+  <a href="https://minder-2hey.onrender.com"><b>Live demo</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="https://minder-2hey.onrender.com/agent#trick"><b>Try to trick it</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="https://www.youtube.com/watch?v=rPdLauPEaNM"><b>Demo video</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="#try-it-in-3-minutes"><b>3&#8209;minute tour</b></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="#how-it-maps-to-the-judging-criteria"><b>For judges</b></a>
 </p>
 
 <p align="center">
@@ -39,9 +39,9 @@ Minder sits between any AI shopping agent and its owner's PayPal, and covers the
 
 ## Demo video
 
-A 2:55 film: one continuous camera across Maya's desk, where every purchase her agent makes is a slip and Minder is the stamp. **YouTube link coming soon.** Until then, read [the storyline, scene by scene](docs/VIDEO.md).
+A 2:55 film: one continuous camera across Maya's desk, where every purchase her agent makes is a slip and Minder is the stamp. **[Watch it on YouTube](https://www.youtube.com/watch?v=rPdLauPEaNM)**, or read [the storyline, scene by scene](docs/VIDEO.md).
 
-<a href="docs/VIDEO.md"><img src="docs/assets/film-strip.jpg" alt="Four moments from the film: Blocked before PayPal moves a cent, Held in PayPal until Maya signs, Refunded through PayPal, and Maya's week on an AG Studio dashboard" width="100%"></a>
+<a href="https://www.youtube.com/watch?v=rPdLauPEaNM"><img src="docs/assets/film-strip.jpg" alt="Four moments from the film: Blocked before PayPal moves a cent, Held in PayPal until Maya signs, Refunded through PayPal, and Maya's week on an AG Studio dashboard" width="100%"></a>
 
 ## Try it in 3 minutes
 
@@ -102,7 +102,7 @@ On the 28-purchase exam ([report](docs/proof/exam.md)), the 14 tricked orders wo
 | Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, the AG Studio dashboard is themed as part of the product, and [How it works](https://minder-2hey.onrender.com/how-it-works) explains the gap and the flow on one page. |
 | Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. |
 | Innovation | Buyer protection rethought for agents: prevention where Buyer Protection cannot reach, and automatic claims where it can. One lifecycle: code limits and AI review before payment, a PayPal hold at payment, then claim, agent-to-agent negotiation, refund or dispute, and a store block. Most agent spending guards we looked at stop at checkout. |
-| Presentation | The video, the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
+| Presentation | [The video](https://www.youtube.com/watch?v=rPdLauPEaNM) ([storyline](docs/VIDEO.md)), the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
 | Best use of PayPal + AI | Minder is built on the buyer's side of PayPal ([why PayPal](#why-paypal)). AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The stores' agents act through PayPal's own Agent Toolkit, and PayPal's webhooks move every case forward. The demo check reads every result back from PayPal's API. |
 | Best use of agentic commerce | Agents on both sides of the deal: a buying agent (ShopBot, or any agent over MCP) and the stores' agents, which answer claims and disputes through PayPal's Agent Toolkit. Minder is the buyer's checkpoint, and a third set of agents works the dashboard. |
 | AG Grid sponsor prize | Two custom AG Studio widgets, a connected six-table data model, and Minder's own agents on Studio's Agent Framework ([details](#how-it-uses-ag-studio)). |
