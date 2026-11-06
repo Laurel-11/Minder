@@ -118,7 +118,7 @@ On the 28-purchase exam ([report](docs/proof/exam.md)), the 14 tricked orders wo
 | Presentation | [The video](https://www.youtube.com/watch?v=rPdLauPEaNM) ([storyline](docs/VIDEO.md)), the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
 | Best use of PayPal + AI | Minder is built on the buyer's side of PayPal ([why PayPal](#why-paypal)). AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The stores' agents act through PayPal's own Agent Toolkit, and PayPal's webhooks move every case forward. The demo check reads every result back from PayPal's API. |
 | Best use of agentic commerce | Agents on both sides of the deal: a buying agent (ShopBot, or any agent over MCP) and the stores' agents, which answer claims and disputes through PayPal's Agent Toolkit. Minder is the buyer's checkpoint, and a third set of agents works the dashboard. |
-| AG Grid sponsor prize | Two custom AG Studio widgets, a connected six-table data model, and Minder's own agents on Studio's Agent Framework ([details](#how-it-uses-ag-studio)). |
+| AG Grid sponsor prize | Two custom AG Studio widgets, a connected six-table data model, Minder's own theme, and Minder's own agents on Studio's Agent Framework ([summary](#how-it-uses-ag-studio), [full write-up with screenshots](docs/AG-STUDIO.md)). |
 | Render sponsor prize | Hosted on Render from [`render.yaml`](render.yaml), with a health check at `/api/ping`. |
 
 ## How it works
@@ -239,7 +239,9 @@ Agents can spend only within Maya's rules, and they cannot accept refunds, escal
 
 ## How it uses AG Studio
 
-The dashboard (`/dashboard`) is a three-page AG Studio report (Overview, Tricks caught, Recovery), themed to read as part of Minder rather than an embed.
+The dashboard (`/dashboard`) is a three-page AG Studio report (Overview, Tricks caught, Recovery), themed to read as part of Minder rather than an embed. **The full write-up, with screenshots of every page, is in [docs/AG-STUDIO.md](docs/AG-STUDIO.md).**
+
+<p align="center"><img src="docs/assets/ag-overview.jpg" alt="The dashboard's Overview page, built with AG Studio" width="100%"></p>
 
 - **Two custom widgets**, registered next to Studio's own. Owners can add them from the widget menu, and Studio's AI agents can place and configure them like any built-in chart.
   - **Money flow:** a sankey of every dollar ShopBot asked to spend: which check settled it, what happened at checkout, and where the money is now. Ribbons take the colour of where the money ended up (green stayed with the owner, amber is waiting, slate reached a store). Clicking a block cross-filters the whole report. On a narrow screen it re-lays itself out as a stack of breakdowns.
