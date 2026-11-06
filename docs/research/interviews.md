@@ -2,9 +2,9 @@
 
 In early November 2026 we interviewed three people about how they shop online today, how they use AI to find things, and what would have to be true before they let an AI agent pay. They are described by role only.
 
-Below are their answers about how they shop today, as they gave them, translated into English. We leave out their reactions to trying the demo, because some of those described checks Minder does not do, so we could not rely on them.
+Below are their answers about how they shop today, as they gave them, translated into English.
 
-Three people is a small sample. It shows that these problems are real for someone, not how common they are.
+Of course,three people is a small sample. It shows that these problems are real for someone, not how common they are.
 
 ## 1. Chemistry undergraduate
 
