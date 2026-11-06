@@ -107,13 +107,25 @@ The live site opens on Maya's week. Her shopping agent, ShopBot, tried to make 9
 
 On the 28-purchase exam ([report](docs/proof/exam.md)), the 14 tricked orders would have charged $682.99 with no checks. Minder let $0.00 of them through, and still paid all 8 normal purchases without bothering the owner.
 
+## What we heard: three interviews
+
+In early November 2026 we interviewed three people about how they shop online today and what would have to be true before they let an AI agent pay. None of them lets an AI pay today. Their answers, in full: [docs/research/interviews.md](docs/research/interviews.md).
+
+| Who | What they would let an AI pay alone | What they fear most | When an order went wrong |
+|---|---|---|---|
+| **Chemistry undergraduate**, 19, tight budget, buys lab supplies | $10, and anything above must ask first | The wrong specification: one word on a reagent ruins a set of results and costs 7 to 8 hours | 3 of 10 beakers arrived broken; 2 days and 15 messages to get $8.40 back |
+| **Garment factory owner**, 42, buys sample trims through PayPal | $100 a purchase, $400 a day, so samples aren't held up by approvals | Fake supplier sites with $30,000 to $50,000 in the account, and duplicate orders tying up cash in stock | Bags at half the agreed thickness; a 12-day dispute, $45 return shipping, a week lost |
+| **Physics graduate student**, 24, buys electronic and optical parts | Under $20, and only through a capped card, because models hallucinate | Hidden text on a page telling the agent to buy something else (indirect prompt injection) | A $185 board lost in customs; 13 days through the PayPal Resolution Center to get it all back |
+
+What it tells us: limits have to be the owner's own, since theirs differ tenfold; their top fears (a swapped product, hidden instructions, runaway orders) are what Minder checks before payment; and even recovery that works costs days, which Minder takes off the owner. Minder does not yet apply coupons, check that a supplier's site is genuine, or choose the shipping method. Three people is a small sample: it shows the problems are real for someone, not how common they are.
+
 ## How it maps to the judging criteria
 
 | Criterion | Where to look |
 |---|---|
 | Technological implementation | Seven PayPal API areas plus PayPal's Agent Toolkit ([details](#how-it-uses-paypal)): every write idempotent and safely retried, and every webhook signature checked with PayPal. AI in seven roles, each answer checked against a schema. 117 unit tests that need no keys, run by CI on every push. |
 | Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, the AG Studio dashboard is themed as part of the product, and [How it works](https://minder-2hey.onrender.com/how-it-works) explains the gap and the flow on one page. |
-| Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. |
+| Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. In three interviews, the top fears about letting an agent pay were these before-payment mistakes: a swapped product, hidden instructions, runaway orders ([what we heard](#what-we-heard-three-interviews)). |
 | Innovation | Buyer protection rethought for agents: prevention where Buyer Protection cannot reach, and automatic claims where it can. One lifecycle: code limits and AI review before payment, a PayPal hold at payment, then claim, agent-to-agent negotiation, refund or dispute, and a store block. Most agent spending guards we looked at stop at checkout. |
 | Presentation | [The video](https://www.youtube.com/watch?v=rPdLauPEaNM) ([storyline](docs/VIDEO.md)), the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
 | Best use of PayPal + AI | Minder is built on the buyer's side of PayPal ([why PayPal](#why-paypal)). AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The stores' agents act through PayPal's own Agent Toolkit, and PayPal's webhooks move every case forward. The demo check reads every result back from PayPal's API. |
