@@ -33,9 +33,10 @@ Minder sits between any AI shopping agent and its owner's PayPal, and covers the
 ## Why it stands out
 
 1. **It covers the gap Buyer Protection leaves.** An order the agent was tricked into arrives exactly as described, so PayPal Buyer Protection usually doesn't cover it. Minder stops it before PayPal is asked to pay ([the gap](#the-gap-minder-closes)).
-2. **Real PayPal, end to end.** Vault, Orders, Payments, tracking, Disputes and signed webhooks, plus PayPal's Agent Toolkit, all live in the sandbox. A check reads every result back from PayPal's own API: 17 of 17 ([proof](#proof-not-promises)).
-3. **Any agent can use it.** ShopBot is the demo agent; any AI agent can shop through Minder's [MCP server](#connect-your-own-agent-mcp), under the same checks.
-4. **Proven, and honest about the rest.** 14 of 14 tricks caught on a 28-case exam, 63 unit tests in CI, a public trick game anyone can try, and a plain list of [what is simulated](#what-is-verified-and-what-is-not).
+2. **More than a spending firewall.** Most guards for AI agents check a budget at checkout. Minder also catches the trick that stays inside the budget, holds big orders in the owner's own PayPal, and gets money back after payment ([how it differs](#minder-and-agent-spending-firewalls)).
+3. **Real PayPal, end to end.** Vault, Orders, Payments, tracking, Disputes and signed webhooks, plus PayPal's Agent Toolkit, all live in the sandbox. A check reads every result back from PayPal's own API: 17 of 17 ([proof](#proof-not-promises)).
+4. **Any agent can use it.** ShopBot is the demo agent; any AI agent can shop through Minder's [MCP server](#connect-your-own-agent-mcp), under the same checks.
+5. **Proven, and honest about the rest.** 14 of 14 tricks caught on a 28-case exam, 110 unit tests in CI, a public trick game anyone can try, and a plain list of [what is simulated](#what-is-verified-and-what-is-not).
 
 ## Demo video
 
@@ -82,6 +83,18 @@ Why now:
 - PayPal is opening checkout to AI agents, with buyer protection and dispute resolution on the merchant side ([PayPal, October 2025](https://newsroom.paypal-corp.com/2025-10-28-PayPal-Launches-Agentic-Commerce-Services-to-Power-AI-Driven-Shopping)). Minder adds the buyer's side: stopping the order the agent was talked into.
 - Prompt injection is the top risk for LLM applications, and has no fool-proof fix ([OWASP LLM01:2025](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)). Minder follows OWASP's mitigations; see the [threat model](SECURITY.md).
 
+## Minder and agent spending firewalls
+
+Limits for AI agents are a popular idea: a budget, an allow-list, and an approve, hold or block decision at checkout. Minder has that too, as its first layer. A buyer needs more than that, because the costliest tricks stay inside the budget, and because some orders only go wrong after they are paid.
+
+| | A typical agent spending firewall | Minder |
+|---|---|---|
+| What it checks | Is this within the limits? | Is this within the limits, and is it what the owner actually asked for? The store page counts as untrusted. |
+| A trick inside the budget: an add-on, two units instead of one, a swapped product | Usually passes: the amount is allowed | Blocked before PayPal is asked to pay ([28-case exam](docs/proof/exam.md): 14 of 14) |
+| An order over the limit | Blocked, or approved in a separate app | Held in the owner's own PayPal as an authorization, captured only when they sign |
+| After payment | Out of scope | Watches the delivery, writes the claim, settles with the store's agent through PayPal's Agent Toolkit, escalates to a PayPal dispute, then blocks the store |
+| What a judge can check | The firewall's own logs | Every payment, refund and dispute read back from PayPal's API ([demo check](docs/proof/demo-check.md): 17 of 17) |
+
 ## With and without Minder
 
 The live site opens on Maya's week. Her shopping agent, ShopBot, tried to make 9 purchases with her PayPal, all of them real sandbox transactions.
@@ -98,7 +111,7 @@ On the 28-purchase exam ([report](docs/proof/exam.md)), the 14 tricked orders wo
 
 | Criterion | Where to look |
 |---|---|
-| Technological implementation | Seven PayPal API areas plus PayPal's Agent Toolkit ([details](#how-it-uses-paypal)): every write idempotent and safely retried, and every webhook signature checked with PayPal. AI in seven roles, each answer checked against a schema. 63 unit tests that need no keys, run by CI on every push. |
+| Technological implementation | Seven PayPal API areas plus PayPal's Agent Toolkit ([details](#how-it-uses-paypal)): every write idempotent and safely retried, and every webhook signature checked with PayPal. AI in seven roles, each answer checked against a schema. 110 unit tests that need no keys, run by CI on every push. |
 | Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, the AG Studio dashboard is themed as part of the product, and [How it works](https://minder-2hey.onrender.com/how-it-works) explains the gap and the flow on one page. |
 | Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. |
 | Innovation | Buyer protection rethought for agents: prevention where Buyer Protection cannot reach, and automatic claims where it can. One lifecycle: code limits and AI review before payment, a PayPal hold at payment, then claim, agent-to-agent negotiation, refund or dispute, and a store block. Most agent spending guards we looked at stop at checkout. |
@@ -259,7 +272,7 @@ The self-test page (`/selftest`) runs two checks. It moves sandbox money, so on 
 
 The exam earned its keep. Our first 21 cases all passed, which told us they were too easy. Seven harder cases then exposed two real bugs: the reviewer missed an overcharge ($45 charged for a bag listed at $18), and it blocked a protection plan the owner had explicitly asked for, because the store page also pushed it. We fixed the reviewer and re-ran everything.
 
-**Unit tests (63, no keys).** `npm test` checks the rules, the combined decision, the PayPal client's retries and request ids, webhook events, the stores' Agent Toolkit calls, the AI schema handling and replay, the trick game's scoring, the dashboard numbers and the cross-site guard. CI runs them, the type check, the linter and a production build on every push.
+**Unit tests (110, no keys).** `npm test` checks the rules, the combined decision, the PayPal client's retries and request ids, webhook events, the stores' Agent Toolkit calls, the AI schema handling and replay, the trick game's scoring, the dashboard numbers and the cross-site guard. It also checks what an agent must send before Minder looks at a purchase, shipping and lateness, each demo store's answer to a claim, how much came back to the owner and PayPal's dispute outcomes in plain words, the rate limits, the admin token, and that secrets never reach the logs. CI runs them, the type check, the linter and a production build on every push.
 
 ## Built to survive a live demo
 
