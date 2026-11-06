@@ -180,13 +180,13 @@
           "dataMapping": {
             "categoryKey": [
               {
-                "id": "decisions.decision"
+                "id": "purchases.decision"
               }
             ],
             "valueKey": [
               {
-                "id": "decisions.purchases",
-                "aggregation": "sum"
+                "id": "purchases.purchaseId",
+                "aggregation": "count"
               }
             ]
           }
@@ -263,6 +263,107 @@
               }
             ]
           }
+        },
+        "callFilter": {
+          "type": "button-filter",
+          "format": {
+            "title": {
+              "enabled": false,
+              "text": "Minder's call"
+            },
+            "style": {
+              "selection": {
+                "type": "multiple"
+              },
+              "dimensions": {
+                "height": 30,
+                "minWidth": 96
+              },
+              "defaultItem": {
+                "color": "#1b2333",
+                "backgroundColor": "#ffffff",
+                "borderEnabled": true,
+                "borderWidth": 1,
+                "borderRadius": 6,
+                "borderColor": "#d3d9e0"
+              },
+              "activeItem": {
+                "color": "#ffffff",
+                "backgroundColor": "#1b2333",
+                "borderColor": "#1b2333"
+              }
+            }
+          },
+          "dataMapping": {
+            "value": [
+              {
+                "id": "purchases.decision"
+              }
+            ]
+          }
+        },
+        "storeFilter": {
+          "type": "button-filter",
+          "format": {
+            "title": {
+              "enabled": false,
+              "text": "Store"
+            },
+            "style": {
+              "selection": {
+                "type": "multiple"
+              },
+              "dimensions": {
+                "height": 30,
+                "minWidth": 96
+              },
+              "defaultItem": {
+                "color": "#1b2333",
+                "backgroundColor": "#ffffff",
+                "borderEnabled": true,
+                "borderWidth": 1,
+                "borderRadius": 6,
+                "borderColor": "#d3d9e0"
+              },
+              "activeItem": {
+                "color": "#ffffff",
+                "backgroundColor": "#1b2333",
+                "borderColor": "#1b2333"
+              }
+            }
+          },
+          "dataMapping": {
+            "value": [
+              {
+                "id": "purchases.merchant"
+              }
+            ]
+          }
+        },
+        "cheques": {
+          "type": "minder-cheques",
+          "format": {
+            "title": {
+              "enabled": true,
+              "text": "Waiting for your signature"
+            },
+            "subtitle": {
+              "enabled": true,
+              "text": "PayPal holds the money until you decide"
+            }
+          },
+          "dataMapping": {
+            "purchase": [
+              {
+                "id": "purchases.purchaseId"
+              }
+            ],
+            "status": [
+              {
+                "id": "purchases.status"
+              }
+            ]
+          }
         }
       },
       "widgetLayout": {
@@ -292,27 +393,45 @@
         },
         "flow": {
           "xTrack": 0,
-          "yTrack": 6,
+          "yTrack": 11,
           "xSpan": 24,
           "ySpan": 17
         },
         "calls": {
           "xTrack": 0,
-          "yTrack": 23,
-          "xSpan": 9,
-          "ySpan": 14
+          "yTrack": 28,
+          "xSpan": 7,
+          "ySpan": 17
         },
         "byStore": {
-          "xTrack": 9,
-          "yTrack": 23,
-          "xSpan": 15,
-          "ySpan": 14
+          "xTrack": 7,
+          "yTrack": 28,
+          "xSpan": 9,
+          "ySpan": 17
         },
         "log": {
           "xTrack": 0,
-          "yTrack": 37,
+          "yTrack": 45,
           "xSpan": 24,
           "ySpan": 21
+        },
+        "callFilter": {
+          "xTrack": 0,
+          "yTrack": 6,
+          "xSpan": 9,
+          "ySpan": 5
+        },
+        "storeFilter": {
+          "xTrack": 9,
+          "yTrack": 6,
+          "xSpan": 15,
+          "ySpan": 5
+        },
+        "cheques": {
+          "xTrack": 16,
+          "yTrack": 28,
+          "xSpan": 8,
+          "ySpan": 17
         }
       }
     },

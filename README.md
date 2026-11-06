@@ -36,7 +36,7 @@ Minder sits between any AI shopping agent and its owner's PayPal, and covers the
 2. **More than a spending firewall.** Most guards for AI agents check a budget at checkout. Minder also catches the trick that stays inside the budget, holds big orders in the owner's own PayPal, and gets money back after payment ([how it differs](#minder-and-agent-spending-firewalls)).
 3. **Real PayPal, end to end.** Vault, Orders, Payments, tracking, Disputes and signed webhooks, plus PayPal's Agent Toolkit, all live in the sandbox. A check reads every result back from PayPal's own API: 17 of 17 ([proof](#proof-not-promises)).
 4. **Any agent can use it.** ShopBot is the demo agent; any AI agent can shop through Minder's [MCP server](#connect-your-own-agent-mcp), under the same checks.
-5. **Proven, and honest about the rest.** 14 of 14 tricks caught on a 28-case exam, 110 unit tests in CI, a public trick game anyone can try, and a plain list of [what is simulated](#what-is-verified-and-what-is-not).
+5. **Proven, and honest about the rest.** 14 of 14 tricks caught on a 28-case exam, 117 unit tests in CI, a public trick game anyone can try, and a plain list of [what is simulated](#what-is-verified-and-what-is-not).
 
 ## Demo video
 
@@ -111,14 +111,14 @@ On the 28-purchase exam ([report](docs/proof/exam.md)), the 14 tricked orders wo
 
 | Criterion | Where to look |
 |---|---|
-| Technological implementation | Seven PayPal API areas plus PayPal's Agent Toolkit ([details](#how-it-uses-paypal)): every write idempotent and safely retried, and every webhook signature checked with PayPal. AI in seven roles, each answer checked against a schema. 110 unit tests that need no keys, run by CI on every push. |
+| Technological implementation | Seven PayPal API areas plus PayPal's Agent Toolkit ([details](#how-it-uses-paypal)): every write idempotent and safely retried, and every webhook signature checked with PayPal. AI in seven roles, each answer checked against a schema. 117 unit tests that need no keys, run by CI on every push. |
 | Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, the AG Studio dashboard is themed as part of the product, and [How it works](https://minder-2hey.onrender.com/how-it-works) explains the gap and the flow on one page. |
 | Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. |
 | Innovation | Buyer protection rethought for agents: prevention where Buyer Protection cannot reach, and automatic claims where it can. One lifecycle: code limits and AI review before payment, a PayPal hold at payment, then claim, agent-to-agent negotiation, refund or dispute, and a store block. Most agent spending guards we looked at stop at checkout. |
 | Presentation | [The video](https://www.youtube.com/watch?v=rPdLauPEaNM) ([storyline](docs/VIDEO.md)), the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
 | Best use of PayPal + AI | Minder is built on the buyer's side of PayPal ([why PayPal](#why-paypal)). AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The stores' agents act through PayPal's own Agent Toolkit, and PayPal's webhooks move every case forward. The demo check reads every result back from PayPal's API. |
 | Best use of agentic commerce | Agents on both sides of the deal: a buying agent (ShopBot, or any agent over MCP) and the stores' agents, which answer claims and disputes through PayPal's Agent Toolkit. Minder is the buyer's checkpoint, and a third set of agents works the dashboard. |
-| AG Grid sponsor prize | Two custom AG Studio widgets, a connected six-table data model, Minder's own theme, and Minder's own agents on Studio's Agent Framework ([summary](#how-it-uses-ag-studio), [full write-up with screenshots](docs/AG-STUDIO.md)). |
+| AG Grid sponsor prize | Three custom AG Studio widgets (one of them a cheque the owner signs), page filters, live data, a saved layout, a connected six-table data model, Minder's own theme, and Minder's own agents on Studio's Agent Framework ([summary](#how-it-uses-ag-studio), [full write-up with screenshots](docs/AG-STUDIO.md)). |
 | Render sponsor prize | Hosted on Render from [`render.yaml`](render.yaml), with a health check at `/api/ping`. |
 
 ## How it works
@@ -243,9 +243,11 @@ The dashboard (`/dashboard`) is a three-page AG Studio report (Overview, Tricks 
 
 <p align="center"><img src="docs/assets/ag-overview.jpg" alt="The dashboard's Overview page, built with AG Studio" width="100%"></p>
 
-- **Two custom widgets**, registered next to Studio's own. Owners can add them from the widget menu, and Studio's AI agents can place and configure them like any built-in chart.
+- **Three custom widgets**, registered next to Studio's own. Owners can add them from the widget menu, and Studio's AI agents can place and configure them like any built-in chart.
   - **Money flow:** a sankey of every dollar ShopBot asked to spend: which check settled it, what happened at checkout, and where the money is now. Ribbons take the colour of where the money ended up (green stayed with the owner, amber is waiting, slate reached a store). Clicking a block cross-filters the whole report. On a narrow screen it re-lays itself out as a stack of breakdowns.
   - **What stores told your agent:** the exact text store pages hid for AI agents, as the AI review caught it, each stamped with what Minder did.
+  - **Waiting for your signature:** every purchase PayPal is holding for the owner, as a cheque with **Sign and pay** and **Decline**. The dashboard does not only report: the owner acts on it, and only her click moves money.
+- **Filters, live data and a layout that stays.** *Minder's call* and *Store* filters narrow the whole page. The dashboard fetches the purchase log again when the owner comes back to the tab, so a purchase ShopBot just made is already there. Whatever the owner changes in the editor, by hand or through the AI, is kept in her browser, with **Restore the default layout** to undo it. Grids export to CSV and charts download as images.
 - **A connected data model:** purchases, items, money flow, store tricks, recovery cases and case steps, all related back to the purchase, plus a "share kept safe" measure. A click in one widget filters the others, across tables.
 - **Minder's own agents on Studio's Agent Framework**, working alongside Studio's built-in lead, data, page, widget and planning agents. The lead is Studio's own, told about the newcomers and allowed to delegate to them.
   - The **auditor** looks purchases up, explains every decision, and checks them against PayPal's own records (order, hold, capture, refund, dispute). It can also put a held purchase in front of the owner as a cheque with **Sign and pay** and **Decline** buttons. Only the owner's click moves money; the agent cannot.
@@ -274,7 +276,7 @@ The self-test page (`/selftest`) runs two checks. It moves sandbox money, so on 
 
 The exam earned its keep. Our first 21 cases all passed, which told us they were too easy. Seven harder cases then exposed two real bugs: the reviewer missed an overcharge ($45 charged for a bag listed at $18), and it blocked a protection plan the owner had explicitly asked for, because the store page also pushed it. We fixed the reviewer and re-ran everything.
 
-**Unit tests (110, no keys).** `npm test` checks the rules, the combined decision, the PayPal client's retries and request ids, webhook events, the stores' Agent Toolkit calls, the AI schema handling and replay, the trick game's scoring, the dashboard numbers and the cross-site guard. It also checks what an agent must send before Minder looks at a purchase, shipping and lateness, each demo store's answer to a claim, how much came back to the owner and PayPal's dispute outcomes in plain words, the rate limits, the admin token, and that secrets never reach the logs. CI runs them, the type check, the linter and a production build on every push.
+**Unit tests (117, no keys).** `npm test` checks the rules, the combined decision, the PayPal client's retries and request ids, webhook events, the stores' Agent Toolkit calls, the AI schema handling and replay, the trick game's scoring, the dashboard numbers and the cross-site guard. It also checks what an agent must send before Minder looks at a purchase, shipping and lateness, each demo store's answer to a claim, how much came back to the owner and PayPal's dispute outcomes in plain words, the rate limits, the admin token, that secrets never reach the logs, and that the dashboard's saved layout only points at fields and widget types that exist. CI runs them, the type check, the linter and a production build on every push.
 
 ## Built to survive a live demo
 

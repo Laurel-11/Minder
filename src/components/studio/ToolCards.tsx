@@ -105,7 +105,7 @@ export function WhatIfCard(p: AgAiToolDetailParams) {
 }
 
 /** A held purchase drawn as a cheque, with the owner's two buttons. Only the owner's click moves the money. */
-export function Cheque({ purchase: m, compact = false }: { purchase: PurchaseRecord; compact?: boolean }) {
+export function Cheque({ purchase: m, compact = false, onDecided }: { purchase: PurchaseRecord; compact?: boolean; onDecided?: (decision: "approve" | "decline") => void }) {
   const router = useRouter();
   const [state, setState] = useState<"idle" | "working" | "approved" | "declined" | "error">("idle");
   const [error, setError] = useState("");
@@ -119,6 +119,7 @@ export function Cheque({ purchase: m, compact = false }: { purchase: PurchaseRec
       return;
     }
     setState(decision === "approve" ? "approved" : "declined");
+    onDecided?.(decision);
     router.refresh();
   };
   return (

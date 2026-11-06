@@ -2,11 +2,13 @@
 // in the widget menu under "Minder", and the AI agents can add and configure them like any other.
 import type { AgFormatShapeParams, AgShapeBuilder, AgWidgetFormParams, AgWidgetsConfig } from "ag-studio";
 import { createWidgets } from "ag-studio-react";
+import ChequesWidget from "./ChequesWidget";
 import MoneyFlowWidget from "./MoneyFlowWidget";
 import StoreTricksWidget from "./StoreTricksWidget";
 
 export const MONEY_FLOW = "minder-money-flow";
 export const STORE_TRICKS = "minder-store-tricks";
+export const CHEQUES = "minder-cheques";
 
 type StyleBuilder = (s: AgShapeBuilder) => ReturnType<AgShapeBuilder["object"]>;
 
@@ -157,10 +159,51 @@ const storeTricks = {
   },
 };
 
-/** Studio's widgets plus Minder's two, with ours first in the menu. */
+const CHEQUE_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 32 32"><rect x="2" y="7" width="28" height="18" rx="2" stroke="var(--ag-chart-palette-fills-4-color, #5b6475)" stroke-width="2"/><path d="M7 13h9M7 17h6" stroke="var(--ag-chart-palette-fills-4-color, #5b6475)" stroke-width="2"/><path d="M18 20c2-3 3 1 5-2s2 1 4-1" stroke="var(--ag-chart-palette-fills-2-color, #a9620a)" stroke-width="2"/></svg>';
+
+const cheques = {
+  id: CHEQUES,
+  label: "Waiting for your signature",
+  icon: CHEQUE_ICON,
+  dataMapping: {
+    purchase: { type: "field", supportedRoles: ["category"], required: true, intent: "category", aiDescription: "The purchase id: purchases.purchaseId." },
+    status: {
+      type: "field",
+      supportedRoles: ["category"],
+      required: true,
+      intent: "category",
+      aiDescription: "The purchase status: purchases.status. Purchases whose status is 'Waiting for you' are drawn as cheques.",
+    },
+  },
+  formatShape: formatShapeWith((s) => s.object({})),
+  form: (p: AgWidgetFormParams) =>
+    p.createDefaults({
+      dataMappingItems: [
+        { key: "purchase", label: "Purchase" },
+        { key: "status", label: "Status" },
+      ],
+    }),
+  defaultState: {
+    format: { title: { enabled: true, text: "Waiting for your signature" }, subtitle: { enabled: true, text: "PayPal holds the money until you decide" } },
+    dataMapping: { purchase: [{ id: "purchases.purchaseId" }], status: [{ id: "purchases.status" }] },
+  },
+  comp: ChequesWidget,
+  defaultSize: { width: 380, height: 340 },
+  minSize: { width: 280, height: 220 },
+  ai: {
+    label: "Waiting for your signature (cheques)",
+    description:
+      "Minder's own widget: every purchase PayPal is holding for the owner, drawn as a cheque with 'Sign and pay' and 'Decline' buttons. Only the owner's click moves money; the widget never decides by itself.",
+    usage: "Use it when the owner wants to see or act on purchases that are waiting for them. It shows a short note when nothing is waiting.",
+    configuration: "Map purchase to purchases.purchaseId and status to purchases.status.",
+  },
+};
+
+/** Studio's widgets plus Minder's three, with ours first in the menu. */
 export function minderWidgets(defaults: AgWidgetsConfig): AgWidgetsConfig {
   return createWidgets({
-    additionalTypes: [moneyFlow, storeTricks],
-    menu: [{ label: "Minder", widgetIds: [MONEY_FLOW, STORE_TRICKS] }, ...defaults.menu],
+    additionalTypes: [moneyFlow, storeTricks, cheques],
+    menu: [{ label: "Minder", widgetIds: [MONEY_FLOW, STORE_TRICKS, CHEQUES] }, ...defaults.menu],
   } as never) as unknown as AgWidgetsConfig;
 }
