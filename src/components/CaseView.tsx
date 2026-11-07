@@ -54,7 +54,7 @@ export function CaseView({
               {m.from === "merchant" ? storeName : WHO[m.from]}
               {m.from === "minder" && n === 0 ? ` to ${storeName}` : ""}
             </p>
-            <p className="mt-1 leading-relaxed">{m.text}</p>
+            <p className="mt-1 whitespace-pre-line leading-relaxed">{m.text}</p>
           </li>
         ))}
       </ol>

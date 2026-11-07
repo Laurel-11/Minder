@@ -13,6 +13,7 @@ import { env } from "./env";
 import { log } from "./log";
 import { usd } from "./money";
 import { handlePurchaseRequest, PurchaseError } from "./purchases";
+import { checkBook, publicKey } from "./receipts";
 import { openCase } from "./recovery";
 import type { PurchaseRequest } from "./types";
 
@@ -156,7 +157,8 @@ export function buildMinderMcp(limits: Limits): McpServer {
     "check_purchase",
     {
       title: "Check a purchase",
-      description: "Where a purchase stands: paid, held or blocked, the delivery, any problem case, and what PayPal itself reported.",
+      description:
+        "Where a purchase stands: paid, held or blocked, the delivery, any problem case, what PayPal itself reported, and Minder's signed receipts for it (each with its SHA-256 fingerprint; the book is at /receipts).",
       inputSchema: { purchase_id: z.string().describe("The purchase_id from request_purchase") },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -178,6 +180,8 @@ export function buildMinderMcp(limits: Limits): McpServer {
         delivery: d && { state: d.state, carrier: d.carrier, tracking_number: d.trackingNumber, promised_by: d.promisedBy },
         problem_case: c && { status: c.status, money_back: moneyBack(c), latest: c.messages.at(-1)?.text, dispute: c.dispute },
         from_paypal: (db.paypalEvents ?? []).filter((e) => e.purchaseId === p.id).map((e) => ({ at: e.receivedAt, event: e.type, said: e.summary })),
+        receipts: (db.receipts ?? []).filter((r) => r.purchaseId === p.id).map((r) => ({ n: r.n, kind: r.kind, says: r.says, fingerprint: r.hash })),
+        receipt_book: { checks_out: checkBook(db.receipts ?? []).ok, public_key: publicKey().id, url: `${env.appUrl}/receipts` },
         details: purchaseUrl(p.id),
       });
     },

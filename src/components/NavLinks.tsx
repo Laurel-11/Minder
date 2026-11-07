@@ -8,6 +8,7 @@ const LINKS: { href: string; label: string; short?: string }[] = [
   { href: "/", label: "Activity" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/rules", label: "Rules" },
+  { href: "/receipts", label: "Receipts" },
   { href: "/how-it-works", label: "How it works" },
 ];
 
@@ -16,7 +17,7 @@ export function NavLinks() {
   const path = usePathname();
   const current = (href: string) => (href === "/" ? path === "/" || path.startsWith("/purchases") || path.startsWith("/approve") : path.startsWith(href));
   return (
-    <nav className="-mx-0.5 flex w-full items-center justify-between gap-2 text-[13px] text-paper/70 sm:mx-0 sm:w-auto sm:justify-end sm:gap-4 sm:text-sm">
+    <nav className="-mx-0.5 flex w-full items-center justify-between gap-0.5 overflow-x-auto text-[12px] text-paper/70 sm:mx-0 sm:w-auto sm:justify-end sm:gap-4 sm:overflow-visible sm:text-sm">
       {LINKS.map((l) => (
         <Link
           key={l.href}

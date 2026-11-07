@@ -5,7 +5,7 @@ export const env = {
   paypalBuyerEmail: process.env.PAYPAL_BUYER_EMAIL ?? "",
   deepseekApiKey: process.env.DEEPSEEK_API_KEY ?? "",
   deepseekModel: process.env.DEEPSEEK_MODEL ?? "deepseek-flash",
-  /** DeepSeek thinking for JSON answers: "low", "high" or "off". The dashboard's agents always run without it. */
+  /** DeepSeek thinking for JSON answers: "low", "high" or "off". A retry goes without it (see ai.ts). The dashboard's agents always run without it. */
   deepseekThinking: (process.env.DEEPSEEK_THINKING ?? "low") as "low" | "high" | "off",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
   // Tried in order. Free-tier models are sometimes "busy" (HTTP 503), so we fall back.
@@ -23,6 +23,8 @@ export const env = {
   /** Maya's saved PayPal (a vault payment token), so a fresh cloud instance can pay without reconnecting. */
   paypalVaultId: process.env.PAYPAL_VAULT_ID ?? "",
   paypalVaultCustomerId: process.env.PAYPAL_VAULT_CUSTOMER_ID ?? "",
+  /** Channel3's product catalog, for the market price check. Optional: without it the check does not run. */
+  channel3ApiKey: process.env.CHANNEL3_API_KEY ?? "",
   /** Unlocks the demo reset and self-test when deployed. Not needed locally. */
   adminToken: process.env.ADMIN_TOKEN ?? "",
 };
@@ -38,5 +40,5 @@ export function missingEnv(): string[] {
 
 /** Values that must never appear in logs or API responses. */
 export function secretValues(): string[] {
-  return [env.paypalClientSecret, env.deepseekApiKey, env.geminiApiKey, env.adminToken].filter((s) => s.length > 6);
+  return [env.paypalClientSecret, env.deepseekApiKey, env.geminiApiKey, env.adminToken, env.channel3ApiKey, process.env.MINDER_RECEIPT_SECRET ?? ""].filter((s) => s.length > 6);
 }

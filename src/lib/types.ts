@@ -70,6 +70,22 @@ export type AiReview = {
   recorded?: boolean;
 };
 
+export type MarketOffer = { title: string; store: string; price: number; url: string };
+/** What other stores charge for one item, from Channel3's product catalog (see market.ts). */
+export type ItemMarket = {
+  item: string;
+  unitPrice: number;
+  /** Offers from products that match the item, in US dollars, cheapest first. */
+  offers: MarketOffer[];
+  /** The median price of those offers, or null when there are too few to call it a market price. */
+  typical: number | null;
+  lowest: MarketOffer | null;
+  /** The highest of those prices: with `lowest`, the range shown to the owner. */
+  highest: number | null;
+  stores: number;
+};
+export type MarketCheck = { source: "Channel3"; checkedAt: string; items: ItemMarket[] };
+
 export type PurchaseStatus =
   | "paid"
   | "awaiting_owner"
@@ -101,10 +117,13 @@ export type Purchase = {
   rules: { outcome: Outcome; checks: RuleCheck[] };
   ai: AiReview | null;
   aiError?: string;
+  /** What other stores charge for the same items, looked up before deciding. */
+  market?: MarketCheck;
   decision: Outcome;
   reasons: string[];
   status: PurchaseStatus;
-  paypal: { orderId?: string; authorizationId?: string; captureId?: string; error?: string };
+  /** receiptOnOrder: the fingerprint of Minder's decision receipt, written on the PayPal order as its custom_id. */
+  paypal: { orderId?: string; authorizationId?: string; captureId?: string; error?: string; receiptOnOrder?: string };
   owner?: { decision: "approve" | "decline"; at: string };
   delivery?: Delivery;
   /** "trick": made on the trick-it page with a visitor's own store note. Kept out of shared lists and totals. */
@@ -159,6 +178,29 @@ export type PayPalEvent = {
   caseId?: string;
 };
 
+export type ReceiptKind = "rules" | "decision" | "paypal" | "owner" | "delivery" | "claim" | "refund" | "dispute" | "dispute_update" | "paypal_event" | "store_blocked";
+
+/** One entry in Minder's receipt book (see receipts.ts): what happened, chained to the entry before and signed. */
+export type Receipt = {
+  /** Position in the book, from 1. */
+  n: number;
+  at: string;
+  kind: ReceiptKind;
+  purchaseId?: string;
+  caseId?: string;
+  /** One plain sentence, written by Minder's code. */
+  says: string;
+  facts: Record<string, unknown>;
+  /** The fingerprint of receipt n-1 (64 zeros for the first). */
+  prev: string;
+  /** SHA-256 of this receipt's canonical form. */
+  hash: string;
+  /** Which public key signed it. */
+  signer: string;
+  /** Ed25519 signature of the fingerprint, base64url. */
+  sig: string;
+};
+
 export type Db = {
   version: 1;
   owner: { name: string };
@@ -176,4 +218,6 @@ export type Db = {
   trickBoard?: { attempts: number; fooled: number; caught: number; slipped: number; paidOnSlips: number };
   /** Set when PayPal reports that Maya removed Minder's saved payment permission. Minder pays nothing until she reconnects. */
   vaultRevokedAt?: string;
+  /** Oldest first: Minder's receipt book. */
+  receipts?: Receipt[];
 };

@@ -25,7 +25,7 @@ type Ctx = Record<string, string>;
 export type DemoStep = { id: string; title: string; needs?: string[]; stopOnFail?: boolean; run: (api: Api, ctx: Ctx) => Promise<string[]> };
 
 type Bought = { purchaseId: string; decision: Outcome; status: string; total: number; reasons: string[]; paypalOrderId?: string };
-type Order = { status: string; amount?: string; captures: { id: string; status: string; amount?: string }[]; authorizations: { id: string; status: string; amount?: string }[]; trackers: number };
+type Order = { status: string; amount?: string; customId?: string; captures: { id: string; status: string; amount?: string }[]; authorizations: { id: string; status: string; amount?: string }[]; trackers: number };
 type CaseInfo = {
   id: string; status: string; openedBy: string; recommendation?: string;
   lastOffer?: { kind: string; amount: number }; refund?: { refundId: string; amount: number; status: string }; dispute?: { disputeId: string; status: string };
@@ -54,6 +54,17 @@ async function caseFor(api: Api, purchaseId: string) {
   return cases[0];
 }
 
+type BookReply = { check: { ok: boolean; count: number; problems: { problem: string }[] }; receipts: { n: number; kind: string; purchaseId?: string; hash: string }[] };
+
+/** PayPal's own order must carry the fingerprint of Minder's signed decision receipt for it. */
+async function receiptOnOrder(api: Api, purchaseId: string, o: Order) {
+  const book = await api<BookReply>("/api/receipts");
+  const decided = book.receipts.find((r) => r.purchaseId === purchaseId && r.kind === "decision");
+  must(decided, "Minder wrote no decision receipt for this purchase.");
+  must(o.customId === decided.hash, `PayPal's order carries custom_id ${o.customId ?? "(none)"}, not receipt #${decided.n}'s fingerprint.`);
+  return `PayPal: the order carries receipt #${decided.n}'s fingerprint (${decided.hash.slice(0, 12)}…) as its custom_id`;
+}
+
 /** Buy something that should go straight through, and confirm PayPal captured exactly that amount. */
 async function paidPurchase(api: Api, r: PurchaseRequest, expectTotal: number) {
   const p = await buy(api, r);
@@ -65,6 +76,7 @@ async function paidPurchase(api: Api, r: PurchaseRequest, expectTotal: number) {
   must(cap.amount === money(expectTotal), `PayPal captured $${cap.amount}, expected $${money(expectTotal)}.`);
   const lines = [`Minder: ${p.reasons[0] ?? "approved"}`, `PayPal: order ${p.paypalOrderId} is COMPLETED, $${cap.amount} captured`];
   if (o.trackers > 0) lines.push("PayPal: the order has a tracking number on it");
+  lines.push(await receiptOnOrder(api, p.purchaseId, o));
   return { p, lines };
 }
 
@@ -242,6 +254,16 @@ export const DEMO_STEPS: DemoStep[] = [
       must(refund.status === "COMPLETED" || refund.status === "PENDING", `PayPal shows the refund as ${refund.status}.`);
       must(refund.amount === money(c.refund!.amount), `PayPal refunded $${refund.amount}, Minder says $${money(c.refund!.amount)}.`);
       return [`PayPal: refund ${id} is ${refund.status}, $${refund.amount} back to Maya`];
+    },
+  },
+  {
+    id: "receipts", title: "Every decision and money move is in the receipt book, signed and chained",
+    run: async (api) => {
+      const book = await api<BookReply>("/api/receipts");
+      must(book.check.ok, `The receipt book does not check out: ${book.check.problems.map((p) => p.problem).join(" ")}`);
+      const kinds = new Set(book.receipts.map((r) => r.kind));
+      for (const k of ["decision", "paypal", "owner", "claim", "refund", "dispute"]) must(kinds.has(k), `No ${k} receipt in the book.`);
+      return [`${book.check.count} receipts; every fingerprint, signature and link checks out`];
     },
   },
   {

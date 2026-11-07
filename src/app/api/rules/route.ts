@@ -1,6 +1,8 @@
 import { updateDb } from "@/lib/db";
 import { log } from "@/lib/log";
+import { demoNow } from "@/lib/clock";
 import { parseRules } from "@/lib/policy-ai";
+import { addReceipt, rulesReceipt } from "@/lib/receipts";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export async function POST(request: Request) {
     await updateDb((db) => {
       db.rulesText = text;
       db.policy = policy;
+      addReceipt(db, rulesReceipt(text, policy, demoNow(db).toISOString()));
     });
     log("rules.saved", { model, budgets: policy.budgets.length, threshold: policy.approvalThreshold });
     return Response.json({ policy, model });

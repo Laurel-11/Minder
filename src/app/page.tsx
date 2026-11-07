@@ -10,6 +10,7 @@ import { withAndWithout } from "@/lib/dashboard-data";
 import { readSharedDb } from "@/lib/db";
 import { deliveryNow, isLate } from "@/lib/delivery";
 import { usd } from "@/lib/money";
+import { checkBook } from "@/lib/receipts";
 import { checkDeliveries } from "@/lib/recovery";
 import type { Db, Purchase } from "@/lib/types";
 
@@ -37,6 +38,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const setupDone = Boolean(db.vault && db.policy);
   const ww = withAndWithout(db.purchases, db.cases);
   const deskSlips = slipsForDesk(db);
+  const book = checkBook(db.receipts ?? []);
 
   return (
     <div className="page-wide relative left-1/2 flex w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-12 lg:gap-16">
@@ -147,7 +149,14 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
       )}
 
       <section className="flex flex-col gap-5">
-        <h2 className="font-display text-2xl font-medium tracking-tight">Activity</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+          <h2 className="font-display text-2xl font-medium tracking-tight">Activity</h2>
+          {book.count > 0 && (
+            <Link href="/receipts" className={`text-sm underline underline-offset-2 ${book.ok ? "" : "text-block"}`}>
+              {book.ok ? `Every decision is signed: ${book.count} receipts, all check out` : "The receipt book does not check out"}
+            </Link>
+          )}
+        </div>
         {db.purchases.length === 0 ? (
           <p className="text-muted">
             Nothing yet. When your agent asks to pay for something, it appears here with Minder&apos;s decision and the reason.

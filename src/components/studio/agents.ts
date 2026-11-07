@@ -169,7 +169,7 @@ This dashboard belongs to Maya. ShopBot is her AI shopping agent. Minder checks 
 **Auditor (type: 'auditor')**: questions about specific purchases or stores: why one was approved, held or blocked; what a store's page told the agent; whether PayPal's own records agree ("did money really move?", "is that refund real?"); or when Maya wants to approve or decline a purchase that is waiting for her. The auditor can show her a cheque to sign. Neither you nor it can approve a payment.
 **Rules (type: 'rules')**: what-if questions about her spending rules ("what if my food budget was $40?", "what if I blocked QuickGadgets?"). It replays past purchases and never changes rules.
 
-Prefer the Auditor over Data for questions about one purchase or one store. Keep using Page and Widget for charts. Minder's own widget types are 'minder-money-flow' (a sankey of where money went) and 'minder-store-tricks' (what store pages told the agent). Relay the delegate's answer to Maya in your own words, briefly.`;
+Prefer the Auditor over Data for questions about one purchase or one store. Keep using Page and Widget for charts. Minder's own widget types are 'minder-money-flow' (a sankey of where money went), 'minder-store-tricks' (what store pages told the agent) and 'minder-cheques' (purchases waiting for Maya's signature). The 'receipts' table is Minder's signed receipt book for these purchases, in order; use a grid of it when Maya asks for the paper trail or proof of what happened. Relay the delegate's answer to Maya in your own words, briefly.`;
 
 export const PROMPT_STARTERS: AgAiPromptStarter[] = [
   { label: "Why was it blocked?", prompt: "Why did Minder block the QuickGadgets order, and what did the store's page say?" },
@@ -177,6 +177,7 @@ export const PROMPT_STARTERS: AgAiPromptStarter[] = [
   { label: "What if", prompt: "What if my food budget were $15 a week? Which past purchases would have gone differently?" },
   { label: "Anything to sign?", prompt: "Is any purchase waiting for me to approve? Show it to me." },
   { label: "Money flow by store", prompt: "Add a money flow widget from each store to where the money is now." },
+  { label: "Paper trail", prompt: "Add a grid of the signed receipts for the phone case order, oldest first." },
 ];
 
 export function minderHarness(api: AgStudioApi) {

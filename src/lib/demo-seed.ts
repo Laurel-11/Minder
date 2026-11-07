@@ -3,7 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { readDb, updateDb } from "./db";
 import { log } from "./log";
-import { freshDb } from "./seed";
+import { addReceipt, rulesReceipt } from "./receipts";
+import { DEMO_POLICY, DEMO_RULES_TEXT, freshDb } from "./seed";
 
 export { DEMO_POLICY, DEMO_RULES_TEXT } from "./seed";
 
@@ -24,6 +25,8 @@ export async function resetDemo(to: "start" | "story" = "start"): Promise<{ back
 
     const cleared = { purchases: db.purchases.length, cases: db.cases.length };
     Object.assign(db, freshDb({ story: to === "story", vault: db.vault }));
+    // A new book starts with the rules in force.
+    if (to === "start") addReceipt(db, rulesReceipt(DEMO_RULES_TEXT, DEMO_POLICY, new Date().toISOString()));
     // PayPal's notifications were about the purchases just cleared. A removed permission stays: that is PayPal's fact, not demo data.
     delete db.paypalEvents;
     log("demo.reset", { backup, to, ...cleared });
@@ -35,11 +38,16 @@ export async function resetDemo(to: "start" | "story" = "start"): Promise<{ back
  * Development only: save the current purchases and cases as the sample story that ships with the code.
  * Leaves out orders stopped by a blocked store, so the story keeps "block this store" for visitors to try.
  */
-export async function saveStory(): Promise<{ purchases: number; cases: number }> {
+export async function saveStory(): Promise<{ purchases: number; cases: number; receipts: number }> {
   const db = await readDb();
   const purchases = db.purchases.filter((p) => !p.rules.checks.some((c) => c.rule === "Blocked merchants" && c.outcome === "block"));
-  const story = { recordedAt: new Date().toISOString(), demoClockDays: db.demoClockDays ?? 0, purchases, cases: db.cases };
+  // The receipt book stops before the store was blocked, so the chain stays whole and "block this store" stays for visitors to try.
+  const kept = new Set(purchases.map((p) => p.id));
+  const book = db.receipts ?? [];
+  const cut = book.findIndex((r) => r.kind === "store_blocked" || (r.purchaseId && !kept.has(r.purchaseId)));
+  const receipts = cut === -1 ? book : book.slice(0, cut);
+  const story = { recordedAt: new Date().toISOString(), demoClockDays: db.demoClockDays ?? 0, purchases, cases: db.cases, receipts };
   await fs.writeFile(STORY_FILE, JSON.stringify(story, null, 2) + "\n");
-  log("demo.story_saved", { purchases: purchases.length, cases: db.cases.length });
-  return { purchases: purchases.length, cases: db.cases.length };
+  log("demo.story_saved", { purchases: purchases.length, cases: db.cases.length, receipts: receipts.length });
+  return { purchases: purchases.length, cases: db.cases.length, receipts: receipts.length };
 }

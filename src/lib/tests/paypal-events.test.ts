@@ -11,9 +11,16 @@ const db = (): Db => ({ ...storyDb(), vault: { vaultId: "VAULT-1", savedAt: AT }
 const event = (type: string, resource: RawEvent["resource"], id = `WH-${type}`): RawEvent => ({ id, event_type: type, create_time: AT, resource });
 
 // From the sample story: coffee paid in full, the lamp partly refunded, the phone case escalated to a dispute.
-const COFFEE = { id: "pur_2ac5eefb", capture: "9B64084806850934V", order: "9P647077A46511840" };
-const LAMP = { purchase: "pur_4a3ca68d", capture: "63932821YJ955270K", case: "case_00f57d53", refund: "24X16871E2119482A" };
-const PHONE = { purchase: "pur_9fdea9b6", capture: "7SY74024E3395724U", case: "case_aef2004a", dispute: "PP-R-UFK-10196532" };
+// Looked up rather than written in, so re-recording the story keeps these tests working.
+const S = storyDb();
+const coffee = S.purchases.find((p) => p.status === "paid" && p.request.items[0].name.startsWith("Medium roast"))!;
+const lampCase = S.cases.find((c) => c.refund)!;
+const phoneCase = S.cases.find((c) => c.dispute)!;
+const lamp = S.purchases.find((p) => p.id === lampCase.purchaseId)!;
+const phone = S.purchases.find((p) => p.id === phoneCase.purchaseId)!;
+const COFFEE = { id: coffee.id, capture: coffee.paypal.captureId!, order: coffee.paypal.orderId! };
+const LAMP = { purchase: lamp.id, capture: lamp.paypal.captureId!, case: lampCase.id, refund: lampCase.refund!.refundId };
+const PHONE = { purchase: phone.id, capture: phone.paypal.captureId!, case: phoneCase.id, dispute: phoneCase.dispute!.disputeId };
 
 describe("verificationBody", () => {
   it("sends the event back to PayPal exactly as it arrived", () => {

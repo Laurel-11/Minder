@@ -161,6 +161,8 @@ export async function createVaultedOrder(input: {
   amount: Money;
   description: string;
   referenceId?: string;
+  /** Written on the order as its custom_id, so PayPal's own record carries it: Minder puts its receipt's fingerprint here. */
+  customId?: string;
 }): Promise<VaultedOrderResult> {
   let order = await call<OrderResponse>("POST", "/v2/checkout/orders", {
     idempotent: input.referenceId ? `${input.referenceId}:order` : true,
@@ -169,6 +171,7 @@ export async function createVaultedOrder(input: {
       purchase_units: [
         {
           reference_id: input.referenceId,
+          ...(input.customId && { custom_id: input.customId.slice(0, 127) }),
           description: input.description.slice(0, 127),
           amount: input.amount,
         },

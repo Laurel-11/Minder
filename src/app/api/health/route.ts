@@ -3,6 +3,8 @@ import { readDb } from "@/lib/db";
 import { missingEnv } from "@/lib/env";
 import { getAccessToken } from "@/lib/paypal";
 import { canReceiveWebhooks, ensureWebhook } from "@/lib/paypal-events";
+import { marketEnabled } from "@/lib/market";
+import { checkBook, publicKey } from "@/lib/receipts";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,10 @@ export async function GET() {
         )
         .catch((e: Error): Check => ({ ok: false, detail: e.message }))
     : { ok: true, detail: "PayPal sends its notifications to the public site. This copy runs without a public address, so it checks PayPal directly instead." };
+  const book = checkBook(db.receipts ?? []);
+  const receipts: Check = book.ok
+    ? { ok: true, detail: `${book.count} receipts, every fingerprint, signature and link checks out (key ${publicKey().id}).` }
+    : { ok: false, detail: book.problems[0]?.problem ?? "The book does not check out." };
   return Response.json({
     env: { ok: missing.length === 0, detail: missing.length ? `Missing in .env.local: ${missing.join(", ")}` : "All keys present" },
     paypal,
@@ -52,5 +58,9 @@ export async function GET() {
       : db.vault
       ? { ok: true, detail: `Maya's PayPal is connected (saved ${new Date(db.vault.savedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" })})` }
       : { ok: false, detail: "Maya has not connected PayPal yet" },
+    receipts,
+    market: marketEnabled()
+      ? { ok: true, detail: "On: before paying, Minder looks each item up in Channel3's catalog of real retailers." }
+      : { ok: true, detail: "Off: no CHANNEL3_API_KEY, so purchases are checked without market prices." },
   });
 }

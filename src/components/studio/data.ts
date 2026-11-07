@@ -105,6 +105,15 @@ const caseStepFields: AgFieldDefinition[] = [
   key("purchaseId", "Purchase ID"),
 ];
 
+const receiptFields: AgFieldDefinition[] = [
+  date("date", "When"),
+  { id: "n", name: "Receipt", format: "integerFormat", description: "The receipt's number in Minder's receipt book." },
+  text("kind", "Kind", "Minder decided, PayPal, You decided, Delivery, Claim, Refund, PayPal dispute, PayPal confirmed or Store blocked."),
+  text("says", "What it says"),
+  text("fingerprint", "Fingerprint", "The start of the receipt's SHA-256 fingerprint. Paid orders carry the decision receipt's full fingerprint on the PayPal order (custom_id)."),
+  key("purchaseId", "Purchase ID"),
+];
+
 // Foreign key 'table.field' -> primary key 'table.field'.
 const manyToOne = (id: string, source: string, target: string): AgRelationDefinition => {
   const [sourceTable, sourceField] = source.split(".");
@@ -140,6 +149,13 @@ export function buildStudioData(rows: DashboardRows): AgDataSourcesDefinition {
       { id: "tricks", name: "Store tricks", description: "Store pages the AI review caught steering ShopBot, with the words they used.", fields: trickFields, data: asDates(rows.tricks) },
       { id: "cases", name: "Recovery cases", description: "Paid orders that went wrong afterwards, and how Minder and PayPal got the money back.", fields: caseFields, data: asDates(rows.cases) },
       { id: "caseSteps", name: "Case steps", description: "Every step of every recovery case, in order: who did what, and when.", fields: caseStepFields, data: asDates(rows.caseSteps) },
+      {
+        id: "receipts",
+        name: "Receipts",
+        description: "Minder's signed receipt book for these purchases: every decision and money move, in order, each signed and chained to the one before.",
+        fields: receiptFields,
+        data: asDates(rows.receipts),
+      },
     ],
     relationships: [
       manyToOne("item-purchase", "items.purchaseId", "purchases.purchaseId"),
@@ -147,6 +163,7 @@ export function buildStudioData(rows: DashboardRows): AgDataSourcesDefinition {
       manyToOne("trick-purchase", "tricks.purchaseId", "purchases.purchaseId"),
       manyToOne("case-purchase", "cases.purchaseId", "purchases.purchaseId"),
       manyToOne("step-case", "caseSteps.caseId", "cases.caseId"),
+      manyToOne("receipt-purchase", "receipts.purchaseId", "purchases.purchaseId"),
     ],
     expressions: [keptSafeShare],
   } as AgDataSourcesDefinition;

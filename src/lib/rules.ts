@@ -23,6 +23,16 @@ export function findBlockedMerchant(policy: Policy, storeName: string): string |
   return policy.blockedMerchants.find((m) => m.trim() !== "" && name.includes(m.trim().toLowerCase()));
 }
 
+/** How long an identical order counts as a repeat: long enough to catch an agent retrying or looping. */
+export const REPEAT_WINDOW_MINUTES = 30;
+
+/** Same store, same items and quantities: what an agent stuck in a retry loop sends again. */
+const sameOrder = (a: PurchaseRequest, b: PurchaseRequest) => {
+  const key = (r: PurchaseRequest) =>
+    [r.merchant.name.trim().toLowerCase(), ...r.items.map((i) => `${i.name.trim().toLowerCase()}|${i.quantity}|${i.unitPrice}`).sort()].join("\n");
+  return key(a) === key(b);
+};
+
 export function evaluateRules(policy: Policy, req: PurchaseRequest, history: Purchase[], now = new Date()) {
   const checks: RuleCheck[] = [];
   const total = itemsTotal(req);
@@ -58,6 +68,15 @@ export function evaluateRules(policy: Policy, req: PurchaseRequest, history: Pur
       ? { rule: "Ask me first", outcome: "hold", message: `${usd(total)} is over ${usd(policy.approvalThreshold)}, so you decide.` }
       : { rule: "Ask me first", outcome: "approve", message: `${usd(total)} is under your ${usd(policy.approvalThreshold)} ask-me threshold.` },
   );
+
+  // A repeat of an order placed minutes ago is how a retrying or looping agent buys five of everything.
+  const repeat = history.find(
+    (p) => COUNTED.has(p.status) && now.getTime() - new Date(p.createdAt).getTime() < REPEAT_WINDOW_MINUTES * 60_000 && sameOrder(p.request, req),
+  );
+  if (repeat) {
+    const minutes = Math.max(1, Math.round((now.getTime() - new Date(repeat.createdAt).getTime()) / 60_000));
+    checks.push({ rule: "Repeat order", outcome: "hold", message: `The same order from ${req.merchant.name} was placed ${minutes} minute${minutes === 1 ? "" : "s"} ago, so you decide.` });
+  }
 
   for (const budget of policy.budgets) {
     const inScope = (c: Category) => budget.categories.length === 0 || budget.categories.includes(c);

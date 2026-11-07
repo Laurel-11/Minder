@@ -1,7 +1,8 @@
 // The demo's starting data, with no I/O: Maya's rules, and a sample story recorded from a real self-test run
 // (real sandbox orders, holds, a refund and a dispute), so a fresh copy of the site is never empty.
 import story from "./demo-story.json";
-import type { Db, Policy, Purchase, RecoveryCase, VaultInfo } from "./types";
+import { resealBook } from "./receipts";
+import type { Db, Policy, Purchase, Receipt, RecoveryCase, VaultInfo } from "./types";
 
 export const DEMO_RULES_TEXT =
   "Groceries and food delivery: no more than $60 a week. Ask me before anything over $100. Never buy gift cards.";
@@ -17,7 +18,7 @@ export const DEMO_POLICY: Policy = {
   explanation: ["Groceries and food delivery: up to $60 per week.", "Ask for approval for any purchase over $100.", "Gift cards are blocked."],
 };
 
-type Story = { recordedAt?: string; demoClockDays: number; purchases: Purchase[]; cases: RecoveryCase[] };
+type Story = { recordedAt?: string; demoClockDays: number; purchases: Purchase[]; cases: RecoveryCase[]; receipts?: Receipt[] };
 const STORY = story as unknown as Story;
 
 /** A fresh database with the demo rules, and the sample story when `story` is true. */
@@ -33,5 +34,7 @@ export function freshDb(opts: { story: boolean; vault?: VaultInfo }): Db {
     cases: withStory ? structuredClone(STORY.cases) : [],
     demoClockDays: withStory ? STORY.demoClockDays : 0,
     pendingSetupTokens: [],
+    // The story's receipt book, signed again with this copy's key (the fingerprints stay as recorded).
+    receipts: withStory ? resealBook(STORY.receipts ?? []) : [],
   };
 }

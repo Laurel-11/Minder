@@ -20,6 +20,7 @@ export async function POST(request: Request) {
       return Response.json({
         status: o.status,
         amount: amountOf(unit.amount),
+        customId: typeof unit.custom_id === "string" ? unit.custom_id : undefined,
         captures: (payments.captures ?? []).map((c) => ({ id: c.id, status: c.status, amount: amountOf(c.amount) })),
         authorizations: (payments.authorizations ?? []).map((a) => ({ id: a.id, status: a.status, amount: amountOf(a.amount) })),
         trackers: trackers.length,

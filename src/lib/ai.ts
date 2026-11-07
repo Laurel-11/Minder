@@ -139,8 +139,11 @@ async function deepseekJson<T>(input: JsonInput, errors: string[]): Promise<{ da
     { role: "system", content: system },
     { role: "user", content: input.prompt },
   ];
+  // Thinking is optional: if the first try fails, the next ones go without it, which is quicker for a busy server.
+  let thinking = env.deepseekThinking;
   for (let attempt = 1; attempt <= 3; attempt++) {
     const started = Date.now();
+    if (attempt > 1 && thinking !== "off") thinking = "off";
     try {
       const res = await fetchWithTimeout(
         `${DEEPSEEK}/chat/completions`,
@@ -153,12 +156,13 @@ async function deepseekJson<T>(input: JsonInput, errors: string[]): Promise<{ da
             response_format: { type: "json_object" },
             temperature: input.temperature ?? 0.2,
             max_tokens: 4000,
-            ...(env.deepseekThinking === "off" ? { thinking: { type: "disabled" } } : { thinking: { type: "enabled" }, reasoning_effort: env.deepseekThinking }),
+            ...(thinking === "off" ? { thinking: { type: "disabled" } } : { thinking: { type: "enabled" }, reasoning_effort: thinking }),
           }),
         },
         input.timeoutMs ?? 60_000,
       );
-      const json = (await res.json().catch(() => ({}))) as ChatReply;
+      // A busy server sometimes answers with an empty body or a bare "null".
+      const json = ((await res.json().catch(() => null)) ?? {}) as ChatReply;
       if (!res.ok) {
         errors.push(`${model}: HTTP ${res.status}`);
         log("ai.error", { model, status: res.status, message: json.error?.message?.slice(0, 200) });
@@ -185,7 +189,7 @@ async function deepseekJson<T>(input: JsonInput, errors: string[]): Promise<{ da
         messages.splice(2, messages.length, { role: "assistant", content: text }, { role: "user", content: `That JSON does not match the schema: ${problem}. Answer again with the corrected JSON object only.` });
         continue;
       }
-      log("ai.ok", { model, ms: Date.now() - started });
+      log("ai.ok", { model, ms: Date.now() - started, thinking });
       return { data: data as T, model };
     } catch (e) {
       errors.push(`${model}: ${(e as Error).message}`);

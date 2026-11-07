@@ -1,7 +1,7 @@
 // Flattens Minder's purchase log and recovery cases into the tables the AG Studio dashboard reads.
 // Every table that describes purchases carries purchaseId, so the dashboard can relate them and a
 // click in one widget filters the others.
-import type { Outcome, Policy, Purchase, PurchaseStatus, RecoveryCase } from "./types";
+import type { Outcome, Policy, Purchase, PurchaseStatus, Receipt, RecoveryCase } from "./types";
 import { moneyBack } from "./case-money";
 
 export const STATUS_LABEL: Record<PurchaseStatus, string> = {
@@ -125,6 +125,8 @@ export type CaseRow = {
 
 /** One step in a recovery case, in order: what happened, who did it, and when. */
 export type CaseStepRow = { caseId: string; purchaseId: string; merchant: string; date: string; who: string; step: string; seq: number };
+/** One signed receipt from Minder's receipt book, for the purchases on the dashboard. */
+export type ReceiptRow = { purchaseId: string; date: string; n: number; kind: string; says: string; fingerprint: string };
 
 export type DashboardRows = {
   purchases: PurchaseRow[];
@@ -135,6 +137,7 @@ export type DashboardRows = {
   tricks: TrickRow[];
   cases: CaseRow[];
   caseSteps: CaseStepRow[];
+  receipts: ReceiptRow[];
 };
 
 /**
@@ -163,7 +166,23 @@ const unquote = (s: string) => s.trim().replace(/^["“”']+|["“”']+$/g, ""
 
 const refundOf = (c?: RecoveryCase): number => moneyBack(c);
 
-export function buildDashboardRows(purchases: Purchase[], opts: { policy?: Policy; now?: Date; cases?: RecoveryCase[] } = {}): DashboardRows {
+const RECEIPT_KIND: Record<string, string> = {
+  decision: "Minder decided",
+  paypal: "PayPal",
+  owner: "You decided",
+  delivery: "Delivery",
+  claim: "Claim",
+  refund: "Refund",
+  dispute: "PayPal dispute",
+  dispute_update: "PayPal dispute",
+  paypal_event: "PayPal confirmed",
+  store_blocked: "Store blocked",
+};
+
+export function buildDashboardRows(
+  purchases: Purchase[],
+  opts: { policy?: Policy; now?: Date; cases?: RecoveryCase[]; receipts?: Receipt[] } = {},
+): DashboardRows {
   const cases = opts.cases ?? [];
   const caseFor = (id: string) => cases.find((c) => c.purchaseId === id);
 
@@ -296,5 +315,10 @@ export function buildDashboardRows(purchases: Purchase[], opts: { policy?: Polic
     return [...fromTimeline, ...fromMessages].map((x) => ({ caseId: c.id, purchaseId: c.purchaseId, merchant, date: x.at, who: x.who, step: x.step, seq: ++seq }));
   });
 
-  return { purchases: rows, items, decisions, budget, flows, tricks, cases: caseRows, caseSteps };
+  const shown = new Set(purchases.map((p) => p.id));
+  const receipts: ReceiptRow[] = (opts.receipts ?? [])
+    .filter((r) => r.purchaseId && shown.has(r.purchaseId))
+    .map((r) => ({ purchaseId: r.purchaseId!, date: r.at, n: r.n, kind: RECEIPT_KIND[r.kind] ?? r.kind, says: r.says, fingerprint: r.hash.slice(0, 16) }));
+
+  return { purchases: rows, items, decisions, budget, flows, tricks, cases: caseRows, caseSteps, receipts };
 }

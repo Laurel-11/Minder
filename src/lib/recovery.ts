@@ -9,6 +9,7 @@ import { usd, toValue } from "./money";
 import { disputeInWords, outcomeInWords } from "./case-money";
 import { CHARGEBACK_REASON, getDispute, simulateChargeback } from "./paypal";
 import { PurchaseError } from "./purchases";
+import { addReceipt, citedReceipts, claimReceipt, disputeReceipt, disputeUpdateReceipt, evidenceTag, refundReceipt } from "./receipts";
 import { judgeOffer, writeClaim } from "./recovery-ai";
 import { findBlockedMerchant } from "./rules";
 import { storeAnswersDispute, storeRefunds } from "./store-agent";
@@ -43,6 +44,10 @@ export async function openCase(purchaseId: string, problem: CaseProblem, openedB
   const timeline = timelineFor(p, problem, now, ownerNote);
   const { claim, askFor } = await writeClaim({ purchase: p, problem, ownerNote, timeline });
   const reply = merchantReply(p, problem);
+  const cites = citedReceipts(db, purchaseId);
+  const evidence = cites.length
+    ? `\n\nEvidence: Minder's signed receipts ${cites.map((r) => `#${r.n}`).join(", ")} for this order${p.paypal.receiptOnOrder ? `. The PayPal order ${p.paypal.orderId} carries the fingerprint of receipt #${cites[0].n}` : ""}.`
+    : "";
   const c: RecoveryCase = {
     id: `case_${crypto.randomUUID().slice(0, 8)}`,
     purchaseId,
@@ -53,7 +58,7 @@ export async function openCase(purchaseId: string, problem: CaseProblem, openedB
     timeline,
     askFor,
     messages: [
-      { from: "minder", at: now.toISOString(), text: claim, offer: askFor },
+      { from: "minder", at: now.toISOString(), text: claim + evidence, offer: askFor },
       { from: "merchant", at: now.toISOString(), text: reply.text, offer: reply.offer },
     ],
     status: "offer_to_review",
@@ -61,6 +66,7 @@ export async function openCase(purchaseId: string, problem: CaseProblem, openedB
   c.recommendation = await judgeOffer({ purchase: p, recoveryCase: c, offer: reply.offer, merchantText: reply.text });
   await updateDb((d) => {
     d.cases.unshift(c);
+    addReceipt(d, claimReceipt(c, p, citedReceipts(d, purchaseId)));
   });
   log("case.opened", { id: c.id, purchaseId, problem, offer: reply.offer.kind, advice: c.recommendation.action });
   return c;
@@ -103,7 +109,9 @@ export async function resolveCase(caseId: string, action: "accept" | "escalate")
     messages.push({ from: "merchant", at: now, text: r.action.message });
     messages.push({ from: "paypal", at: now, text: `PayPal refunded ${usd(offer.amount)} to you (refund ${r.refundId}, ${r.status.toLowerCase()}). ${p.request.merchant.name}'s agent sent it with PayPal's Agent Toolkit.` });
   } else {
-    const note = `${c.problem === "not_delivered" ? "Paid order never shipped" : "Item arrived damaged"}. ${c.messages[0].text}`.slice(0, 200);
+    // PayPal's case starts with a pointer to Minder's signed receipts for this order.
+    const tag = evidenceTag(citedReceipts(db, p.id));
+    const note = `${tag ? `${tag} ` : ""}${c.problem === "not_delivered" ? "Paid order never shipped" : "Item arrived damaged"}. ${c.messages[0].text}`.slice(0, 200);
     const { disputeId } = await simulateChargeback({ captureId: p.paypal.captureId!, amount: { currency_code: "USD", value: toValue(p.total) }, note, reasonCode: CHARGEBACK_REASON[c.problem] });
     if (!disputeId) throw new PurchaseError("PayPal did not return a dispute ID.", 502);
     patch.dispute = { disputeId, status: "OPEN", updatedAt: now };
@@ -115,6 +123,8 @@ export async function resolveCase(caseId: string, action: "accept" | "escalate")
   const updated = await updateDb((d) => {
     const x = d.cases.find((k) => k.id === caseId)!;
     Object.assign(x, patch);
+    if (patch.refund) addReceipt(d, refundReceipt(x, p, now));
+    else if (patch.dispute) addReceipt(d, disputeReceipt(x, p, now, citedReceipts(d, p.id), CHARGEBACK_REASON[x.problem]));
     return x;
   });
   log("case.resolved", { id: caseId, action, status: updated.status });
@@ -142,10 +152,16 @@ export async function refreshDispute(caseId: string): Promise<RecoveryCase> {
       updatedAt: new Date().toISOString(),
       ...(resolved && { outcome: outcome?.outcome_code ?? "RESOLVED", amount }),
     };
+    const at = demoNow(db2).toISOString();
     if (resolved) {
       x.status = "closed";
-      x.messages.push({ from: "paypal", at: demoNow(db2).toISOString(), text: outcomeInWords(outcome?.outcome_code, amount ? usd(amount) : "") });
-    } else if (changed) x.messages.push({ from: "paypal", at: demoNow(db2).toISOString(), text: disputeInWords(d.status) });
+      const text = outcomeInWords(outcome?.outcome_code, amount ? usd(amount) : "");
+      x.messages.push({ from: "paypal", at, text });
+      addReceipt(db2, disputeUpdateReceipt(x, at, text));
+    } else if (changed) {
+      x.messages.push({ from: "paypal", at, text: disputeInWords(d.status) });
+      addReceipt(db2, disputeUpdateReceipt(x, at, disputeInWords(d.status)));
+    }
     return x;
   });
 }
@@ -210,6 +226,7 @@ export async function blockStoreFromCase(caseId: string): Promise<{ store: strin
     policy.explanation.push(`Never buy from ${store}. You blocked it after ${note}.`);
     const sentence = `Never buy from ${store}.`;
     if (!db.rulesText?.includes(sentence)) db.rulesText = db.rulesText ? `${db.rulesText.trimEnd()} ${sentence}` : sentence;
+    addReceipt(db, { at: demoNow(db).toISOString(), kind: "store_blocked", purchaseId: p.id, caseId: c.id, says: `You blocked ${store}: ${note}. Minder will not pay it again.`, facts: { store, note, rulesText: db.rulesText } });
     log("rules.store_blocked", { caseId, store });
     return { store, note };
   });

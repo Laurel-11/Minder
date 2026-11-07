@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Check = { ok: boolean; detail: string };
-type Health = { env: Check; paypal: Check; ai: Check; webhooks?: Check; vault: Check };
+type Health = { env: Check; paypal: Check; ai: Check; webhooks?: Check; vault: Check; receipts?: Check; market?: Check };
 
 const labels: Record<keyof Health, string> = {
   env: "Configuration",
@@ -11,6 +11,8 @@ const labels: Record<keyof Health, string> = {
   ai: "AI model",
   webhooks: "PayPal notifications (webhooks)",
   vault: "Maya's saved PayPal",
+  receipts: "Receipt book",
+  market: "Market prices (Channel3)",
 };
 
 export default function StatusPage() {

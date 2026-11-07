@@ -8,6 +8,7 @@ import { log } from "./log";
 import { usd } from "./money";
 import { createWebhook, listWebhookEventTypes, listWebhooks, setWebhookEvents, verifyWebhookSignature, type WebhookHeaders } from "./paypal";
 import { disputeInWords, outcomeInWords } from "./case-money";
+import { addReceipt } from "./receipts";
 import { storeAnswersCase } from "./recovery";
 import type { Db, PayPalEvent, Purchase, RecoveryCase } from "./types";
 
@@ -199,6 +200,15 @@ export function applyPayPalEvent(db: Db, e: RawEvent, receivedAt: string): PayPa
   };
   db.paypalEvents.unshift(event);
   db.paypalEvents.length = Math.min(db.paypalEvents.length, KEEP);
+  // PayPal's own word goes in the receipt book too, next to what Minder decided.
+  addReceipt(db, {
+    at,
+    kind: "paypal_event",
+    purchaseId: event.purchaseId,
+    caseId: event.caseId,
+    says: summary,
+    facts: { eventId: event.id, type: event.type, resourceId: event.resourceId ?? null, paypalCreatedAt: event.createdAt, signatureCheckedWithPayPal: true },
+  });
   return event;
 }
 

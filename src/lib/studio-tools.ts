@@ -108,6 +108,19 @@ export async function verifyWithPayPal(db: Db, purchaseId: string): Promise<Veri
   const orderAmount = amountOf(unit.amount);
   checks.push({ label: "Order amount", minder: usd(p.total), paypal: Number.isNaN(orderAmount) ? "Not shown" : usd(orderAmount), match: Math.abs(orderAmount - p.total) < 0.005 });
 
+  // Orders placed since Minder keeps a receipt book carry the decision receipt's fingerprint as their custom_id.
+  const decided = (db.receipts ?? []).find((r) => r.purchaseId === p.id && r.kind === "decision");
+  if (p.paypal.receiptOnOrder) {
+    const onOrder = typeof unit.custom_id === "string" ? unit.custom_id : "";
+    const expected = p.paypal.receiptOnOrder;
+    checks.push({
+      label: "Minder's receipt on the order",
+      minder: decided ? `Receipt #${decided.n}, ${expected.slice(0, 12)}…` : `${expected.slice(0, 12)}…`,
+      paypal: onOrder ? `custom_id ${onOrder.slice(0, 12)}…` : "No custom_id",
+      match: onOrder === expected,
+    });
+  }
+
   const captured = captures.filter((c) => c.status === "COMPLETED" || c.status === "PARTIALLY_REFUNDED" || c.status === "REFUNDED");
   const capturedSum = captured.reduce((s, c) => s + (amountOf(c.amount) || 0), 0);
   const authStatus = (auths[0]?.status as string | undefined) ?? "";

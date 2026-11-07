@@ -24,7 +24,10 @@ const WHY_PAYPAL = [
   },
   { need: "Ask the owner before money moves", paypal: "An authorization: the money is held in the owner's PayPal, captured only if they approve, released if they decline." },
   { need: "Get money back when an order goes wrong", paypal: "Buyer Protection, refunds and disputes." },
-  { need: "A record nobody has to take on trust", paypal: "Webhooks with signature checks, and APIs that read every payment, refund and dispute back." },
+  {
+    need: "A record nobody has to take on trust",
+    paypal: "Webhooks with signature checks, APIs that read every payment, refund and dispute back, and each order's custom_id, which carries the fingerprint of Minder's signed receipt for it.",
+  },
   { need: "The store's side of the deal", paypal: "PayPal's Agent Toolkit, which the stores' agents use to refund and to answer disputes." },
 ];
 
@@ -35,6 +38,7 @@ const STAGES: { name: string; steps: Step[] }[] = [
       { title: "An agent asks to pay", body: "ShopBot, or any agent connected over MCP. Agents can only ask." },
       { title: "Your rules, in code", body: "Budgets, the ask-me threshold, blocked stores and gift cards. No prompt can change them." },
       { title: "AI review", body: "Compares the order with your own words and the store page, which it treats as untrusted. It can only make a decision stricter." },
+      { title: "A signed receipt", body: "Minder writes the decision down and signs it before PayPal sees the order. The order carries the receipt's fingerprint.", api: "Orders v2 custom_id" },
     ],
   },
   {
@@ -62,6 +66,10 @@ const PRINCIPLES = [
   { title: "Store pages are untrusted", body: "Page text that tries to steer an AI agent counts as manipulation: the purchase is blocked or held." },
   { title: "Code checks the AI", body: "Every AI answer must match a schema, and the stricter of your rules and the AI's view wins." },
   { title: "No AI, no payment", body: "If no model answers, anything not already blocked waits for you." },
+  {
+    title: "Every decision is signed",
+    body: "Each decision and each money move goes into a receipt book: signed, and chained to the receipt before it. Anyone can check it offline, and claims and disputes cite it.",
+  },
 ];
 
 const SOURCES = [
@@ -239,6 +247,12 @@ export default function HowItWorksPage() {
         <a href={REPO} className="underline underline-offset-2">
           Source code and README
         </a>
+        <Link href="/exam" className="underline underline-offset-2">
+          The 60-case exam: run it yourself
+        </Link>
+        <Link href="/receipts" className="underline underline-offset-2">
+          The receipt book
+        </Link>
         <a href={`${REPO}/tree/main/docs/proof`} className="underline underline-offset-2">
           Latest test reports
         </a>

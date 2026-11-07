@@ -5,7 +5,9 @@ import { readDb, updateDb } from "./db";
 import { shipAfterPayment } from "./delivery";
 import { log } from "./log";
 import { toValue } from "./money";
+import { checkMarket, marketRule } from "./market";
 import { captureAuthorization, createVaultedOrder, voidAuthorization } from "./paypal";
+import { addReceipt, decisionReceipt, deliveryReceipt, ownerReceipt, paypalReceipt } from "./receipts";
 import { reviewPurchase } from "./review";
 import { evaluateRules, worst } from "./rules";
 import type { Outcome, Policy, Purchase, PurchaseRequest } from "./types";
@@ -26,12 +28,20 @@ export async function assessPurchase(input: { policy: Policy; rulesText?: string
   // 1. Hard rules (plain code). The AI can never loosen these.
   const rules = evaluateRules(policy, request, history, input.now);
 
+  // 1b. What other stores charge (Channel3). Also plain code: far above the market price waits for the owner.
+  const market = rules.outcome === "block" ? null : await checkMarket(request);
+  const priceCheck = marketRule(market);
+  if (priceCheck) {
+    rules.checks.push(priceCheck);
+    rules.outcome = worst(rules.outcome, priceCheck.outcome);
+  }
+
   // 2. AI review. If the AI is down, fail safe: anything not blocked waits for the owner.
   let ai: Purchase["ai"] = null;
   let aiError: string | undefined;
   if (rules.outcome !== "block") {
     try {
-      ai = await reviewPurchase({ request, total: rules.total, rulesText: input.rulesText, recent: history, liveOnly: input.liveOnly });
+      ai = await reviewPurchase({ request, total: rules.total, rulesText: input.rulesText, recent: history, liveOnly: input.liveOnly, market });
     } catch (e) {
       aiError = (e as Error).message;
     }
@@ -50,7 +60,7 @@ export async function assessPurchase(input: { policy: Policy; rulesText?: string
     if (reasons.length === 0) reasons.push("Within all of your rules.");
   }
   if (ai?.recorded) reasons.push("The live AI reviewer was unavailable, so this is its recorded review of this exact order.");
-  return { rules, ai, aiError, decision, reasons };
+  return { rules, ai, aiError, decision, reasons, market };
 }
 
 export async function handlePurchaseRequest(request: PurchaseRequest): Promise<Purchase> {
@@ -60,7 +70,7 @@ export async function handlePurchaseRequest(request: PurchaseRequest): Promise<P
   if (db.vaultRevokedAt) throw new PurchaseError("The owner removed Minder's permission to pay in their PayPal account. Reconnect PayPal to let the agent pay again.", 409);
   if (!db.policy) throw new PurchaseError("The owner has not written any rules yet.", 409);
 
-  const { rules, ai, aiError, decision, reasons } = await assessPurchase({
+  const { rules, ai, aiError, decision, reasons, market } = await assessPurchase({
     policy: db.policy,
     rulesText: db.rulesText,
     request,
@@ -76,14 +86,22 @@ export async function handlePurchaseRequest(request: PurchaseRequest): Promise<P
     rules: { outcome: rules.outcome, checks: rules.checks },
     ai,
     aiError,
+    ...(market && { market }),
     decision,
     reasons,
     status: decision === "block" ? "blocked" : decision === "hold" ? "awaiting_owner" : "paid",
     paypal: {},
   };
 
-  // 3. Move the money (or not).
-  if (decision !== "block") {
+  // 3. Write the decision down, then move the money (or not). The decision receipt comes first, so its
+  // fingerprint can go on the PayPal order itself: PayPal's record then points at Minder's signed receipt.
+  if (decision === "block") {
+    await updateDb((d) => {
+      d.purchases.unshift(purchase);
+      addReceipt(d, decisionReceipt(purchase, db.rulesText));
+    });
+  } else {
+    const decided = await updateDb((d) => addReceipt(d, decisionReceipt(purchase, db.rulesText)));
     try {
       const order = await createVaultedOrder({
         vaultId: db.vault.vaultId,
@@ -91,18 +109,22 @@ export async function handlePurchaseRequest(request: PurchaseRequest): Promise<P
         amount: { currency_code: "USD", value: toValue(rules.total) },
         description: `${request.merchant.name}: ${request.items.map((i) => i.name).join(", ")}`,
         referenceId: purchase.id,
+        customId: decided.hash,
       });
-      purchase.paypal = { orderId: order.orderId, authorizationId: order.authorizationId, captureId: order.captureId };
+      purchase.paypal = { orderId: order.orderId, authorizationId: order.authorizationId, captureId: order.captureId, receiptOnOrder: decided.hash };
       if (decision === "approve") purchase.delivery = await shipAfterPayment(purchase, demoNow(db));
     } catch (e) {
       purchase.status = "payment_failed";
       purchase.paypal.error = (e as Error).message;
     }
+    await updateDb((d) => {
+      d.purchases.unshift(purchase);
+      const at = demoNow(d).toISOString();
+      addReceipt(d, paypalReceipt(purchase, at));
+      const shipped = deliveryReceipt(purchase, at);
+      if (shipped) addReceipt(d, shipped);
+    });
   }
-
-  await updateDb((d) => {
-    d.purchases.unshift(purchase);
-  });
   log("purchase.decided", { id: purchase.id, decision, status: purchase.status, total: purchase.total, ai: ai?.verdict ?? aiError ?? "skipped" });
   return purchase;
 }
@@ -128,6 +150,9 @@ export async function decideHeldPurchase(id: string, decision: "approve" | "decl
   const updated = await updateDb((d) => {
     const p = d.purchases.find((x) => x.id === id)!;
     Object.assign(p, patch);
+    addReceipt(d, ownerReceipt(p));
+    const shipped = deliveryReceipt(p, demoNow(d).toISOString());
+    if (shipped) addReceipt(d, shipped);
     return p;
   });
   log("purchase.owner_decision", { id, decision, status: updated.status });

@@ -51,3 +51,22 @@ describe("worst()", () => {
     for (const a of all) for (const b of all) expect(worst(a, b)).toBe(worst(b, a));
   });
 });
+
+describe("repeat orders", () => {
+  const cable = request([{ name: "USB-C cable", price: 12, category: "electronics" }], { merchant: { name: "QuickGadgets Outlet" } });
+  const placed = (minutesAgo: number, status: "paid" | "blocked" = "paid", req = cable) =>
+    ({ id: `pur_${minutesAgo}`, createdAt: new Date(now.getTime() - minutesAgo * 60_000).toISOString(), request: req, status }) as Parameters<typeof evaluateRules>[2][number];
+
+  it("asks the owner when the same order comes again minutes later", () => {
+    const r = evaluateRules(policy(), cable, [placed(3)], now);
+    expect(r.outcome).toBe("hold");
+    expect(r.checks.find((c) => c.rule === "Repeat order")?.message).toBe("The same order from QuickGadgets Outlet was placed 3 minutes ago, so you decide.");
+  });
+
+  it("lets it through after half an hour, or when the order differs, or when the first one was blocked", () => {
+    expect(evaluateRules(policy(), cable, [placed(31)], now).outcome).toBe("approve");
+    const two = request([{ name: "USB-C cable", price: 12, quantity: 2, category: "electronics" }], { merchant: { name: "QuickGadgets Outlet" } });
+    expect(evaluateRules(policy(), two, [placed(3)], now).outcome).toBe("approve");
+    expect(evaluateRules(policy(), cable, [placed(3, "blocked")], now).outcome).toBe("approve");
+  });
+});

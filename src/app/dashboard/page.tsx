@@ -19,7 +19,7 @@ async function loadLayout(): Promise<unknown> {
 export default async function DashboardPage() {
   const [db, initialState] = await Promise.all([readSharedDb(), loadLayout()]);
   const ww = withAndWithout(db.purchases, db.cases);
-  const rows = buildDashboardRows(db.purchases, { policy: db.policy, now: demoNow(db), cases: db.cases });
+  const rows = buildDashboardRows(db.purchases, { policy: db.policy, now: demoNow(db), cases: db.cases, receipts: db.receipts });
   return (
     <div className="page-wide relative left-1/2 flex w-[min(1180px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-5">
       <div>
