@@ -184,6 +184,8 @@ Every decision Minder makes about the owner's money, and every money move PayPal
 - **Checkable without trusting Minder.** Download the book or one purchase's evidence pack and run `node scripts/verify-receipts.mjs <file>`: plain Node, no keys. **Change one and see** on the site lets anyone edit a copy of a receipt and watch the check fail.
 - **No store text in the book.** A receipt keeps the fingerprints of what a store's page said and what the AI review wrote. The text itself stays with the purchase, and the evidence pack carries it so the fingerprints can be checked.
 
+<p align="center"><img src="docs/assets/receipts-change-one.jpg" alt="Change one and see: a blocked decision edited to approve fails the check, because its contents no longer match its fingerprint" width="49%"> <img src="docs/assets/receipts-purchase.jpg" alt="A purchase page's receipts: the decision, the PayPal payment, the delivery promise, the claim and the PayPal dispute, with the note that PayPal's order carries the decision receipt's fingerprint" width="49%"></p>
+
 Details, format and limits: [docs/RECEIPTS.md](docs/RECEIPTS.md).
 
 ## Market prices (Channel3)
@@ -193,6 +195,8 @@ Before paying, Minder looks each item up in [Channel3](https://trychannel3.com)'
 - **In code:** an item priced at more than three times the typical price elsewhere waits for the owner. The bar is high on purpose: a generic name such as "portable Bluetooth speaker" matches $29 and $430 models alike.
 - **For the AI review:** the same prices go into the prompt marked as trusted, next to the store page marked as untrusted, so the reviewer can tell what the item really is and whether a price is out of line.
 - **For the owner:** the purchase page shows what similar products sell for and links the cheapest store. The decision receipt records the prices Minder saw.
+
+<p align="center"><img src="docs/assets/market-prices.jpg" alt="What other stores charge: the $30 desk lamp, against similar products at $64.00 to $407.99 at 4 stores" width="70%"></p>
 
 If Channel3 is not set up or does not answer, the check simply does not run; the purchase is never blocked for lack of a price.
 
@@ -301,7 +305,7 @@ The dashboard (`/dashboard`) is a three-page AG Studio report (Overview, Tricks 
 
 The self-test page (`/selftest`) runs the demo check. It moves sandbox money, so on the live site it is locked behind `ADMIN_TOKEN`; the latest reports are in [`docs/proof`](docs/proof). The exam is public at [/exam](https://minder-2hey.onrender.com/exam).
 
-**Demo check (18 steps).** It plays the whole story with real sandbox money, then reads every result back from PayPal's own API rather than from Minder's records: order `COMPLETED`, hold `CREATED` then `CAPTURED`, hold `VOIDED`, refund `COMPLETED`, the dispute present in PayPal, and the receipt fingerprint on PayPal's orders. It ends by checking the whole receipt book. Latest run: 18 of 18 passed in 1 min 25 s.
+**Demo check (18 steps).** It plays the whole story with real sandbox money, then reads every result back from PayPal's own API rather than from Minder's records: order `COMPLETED`, hold `CREATED` then `CAPTURED`, hold `VOIDED`, refund `COMPLETED`, the dispute present in PayPal, and the receipt fingerprint on PayPal's orders. It ends by checking the whole receipt book. Latest run: 18 of 18 passed in 1 min 15 s.
 
 **Exam (60 purchases).** Every case has its answer fixed in advance and is graded by code, not by the AI. It runs through exactly the same rules, market check and review code as a real purchase, but nothing is paid. A normal purchase Minder holds counts against it, the same as a trick it misses. The cases:
 
@@ -318,6 +322,8 @@ The self-test page (`/selftest`) runs the demo check. It moves sandbox money, so
 | Normal purchases paid without bothering the owner | 66 of 66 |
 | Fine orders from a manipulative store, held for the owner | 9 of 9 |
 | Hard rules | 24 of 24 (gift cards are stopped by code, without asking the AI) |
+
+<p align="center"><img src="docs/assets/exam-results.jpg" alt="The exam page's published results: 81 of 81 tricks caught, 24 of 24 from the interviews, 66 of 66 normal purchases paid, 180 of 180 answers as written" width="85%"></p>
 
 The exam earned its keep. Our first 21 cases all passed, which told us they were too easy. Seven harder cases then exposed two real bugs: the reviewer missed an overcharge ($45 charged for a bag listed at $18), and it blocked a protection plan the owner had explicitly asked for, because the store page also pushed it. We fixed the reviewer and re-ran everything. A clean score on cases we wrote ourselves mostly tells us where to look next, so the exam is public: anyone can [run it](https://minder-2hey.onrender.com/exam), and the trick-it page takes tricks we did not write.
 

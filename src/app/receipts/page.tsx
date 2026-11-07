@@ -85,7 +85,7 @@ export default async function ReceiptsPage() {
         </div>
       </section>
 
-      {forPanel.length > 0 && <ReceiptTamper receipts={forPanel} keyId={key.id} />}
+      {forPanel.length > 0 && <ReceiptTamper receipts={forPanel} />}
 
       {book.length > 0 && (
         <section aria-labelledby="book" className="flex flex-col gap-3">

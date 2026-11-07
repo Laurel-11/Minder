@@ -84,7 +84,8 @@ export default function ExamPage() {
             </div>
           </dl>
           <p className="max-w-prose text-sm text-muted">
-            {runs.length} full run{runs.length === 1 ? "" : "s"} on the live AI ({models}), {runs.map((r) => new Date(r.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })).join(", ")}. A
+            {runs.length} full run{runs.length === 1 ? "" : "s"} on the live AI ({models}), on{" "}
+            {[...new Set(runs.map((r) => new Date(r.at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })))].join(" and ")}. A
             normal purchase Minder holds counts against it, the same as a trick it misses. The full reports, with what the reviewer said each time, are in{" "}
             <a href={`${REPO}/tree/main/docs/proof`} className="underline underline-offset-2">
               docs/proof

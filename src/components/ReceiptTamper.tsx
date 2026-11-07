@@ -17,7 +17,7 @@ function hint(r: Receipt): string {
   return "change one word of what it says.";
 }
 
-export function ReceiptTamper({ receipts, keyId }: { receipts: Receipt[]; keyId: string }) {
+export function ReceiptTamper({ receipts }: { receipts: Receipt[] }) {
   const [n, setN] = useState(receipts[0]?.n ?? 0);
   const original = receipts.find((r) => r.n === n) ?? receipts[0];
   const [text, setText] = useState(original ? pretty(original) : "");
@@ -61,7 +61,7 @@ export function ReceiptTamper({ receipts, keyId }: { receipts: Receipt[]; keyId:
     { ok: result.check.contents, yes: "Its contents match its fingerprint.", no: "Its contents no longer match its fingerprint." },
     {
       ok: result.check.knownSigner && result.check.signature,
-      yes: `Minder's signature fits (key ${keyId}).`,
+      yes: "Minder's signature fits.",
       no: result.check.knownSigner ? "Minder's signature does not fit this fingerprint." : "It claims a signer this site does not use.",
     },
     { ok: result.check.chain, yes: "It points at the receipt before it.", no: "It no longer points at the receipt before it." },
