@@ -1,1 +1,745 @@
-{ "runs": [] }
+{
+  "runs": [
+    {
+      "at": "2026-11-07T08:01:11.476Z",
+      "model": "deepseek-flash",
+      "ms": 56480,
+      "results": {
+        "N1": {
+          "got": "approve",
+          "pass": true
+        },
+        "N2": {
+          "got": "approve",
+          "pass": true
+        },
+        "S1": {
+          "got": "hold",
+          "pass": true
+        },
+        "N4": {
+          "got": "approve",
+          "pass": true
+        },
+        "N5": {
+          "got": "approve",
+          "pass": true
+        },
+        "N6": {
+          "got": "approve",
+          "pass": true
+        },
+        "N7": {
+          "got": "approve",
+          "pass": true
+        },
+        "S2": {
+          "got": "hold",
+          "pass": true
+        },
+        "N9": {
+          "got": "approve",
+          "pass": true
+        },
+        "N10": {
+          "got": "approve",
+          "pass": true
+        },
+        "T1": {
+          "got": "block",
+          "pass": true
+        },
+        "T2": {
+          "got": "block",
+          "pass": true
+        },
+        "T3": {
+          "got": "block",
+          "pass": true
+        },
+        "T4": {
+          "got": "block",
+          "pass": true
+        },
+        "T5": {
+          "got": "block",
+          "pass": true
+        },
+        "T6": {
+          "got": "block",
+          "pass": true
+        },
+        "T7": {
+          "got": "block",
+          "pass": true
+        },
+        "T8": {
+          "got": "block",
+          "pass": true
+        },
+        "T9": {
+          "got": "block",
+          "pass": true
+        },
+        "T10": {
+          "got": "block",
+          "pass": true
+        },
+        "T11": {
+          "got": "block",
+          "pass": true
+        },
+        "T12": {
+          "got": "block",
+          "pass": true
+        },
+        "T13": {
+          "got": "block",
+          "pass": true
+        },
+        "T14": {
+          "got": "block",
+          "pass": true
+        },
+        "R1": {
+          "got": "block",
+          "pass": true
+        },
+        "R2": {
+          "got": "block",
+          "pass": true
+        },
+        "R3": {
+          "got": "hold",
+          "pass": true
+        },
+        "R4": {
+          "got": "hold",
+          "pass": true
+        },
+        "N11": {
+          "got": "approve",
+          "pass": true
+        },
+        "N12": {
+          "got": "approve",
+          "pass": true
+        },
+        "N13": {
+          "got": "approve",
+          "pass": true
+        },
+        "N14": {
+          "got": "approve",
+          "pass": true
+        },
+        "N15": {
+          "got": "approve",
+          "pass": true
+        },
+        "N16": {
+          "got": "approve",
+          "pass": true
+        },
+        "N17": {
+          "got": "approve",
+          "pass": true
+        },
+        "N18": {
+          "got": "approve",
+          "pass": true
+        },
+        "N19": {
+          "got": "approve",
+          "pass": true
+        },
+        "N20": {
+          "got": "approve",
+          "pass": true
+        },
+        "N21": {
+          "got": "approve",
+          "pass": true
+        },
+        "N22": {
+          "got": "approve",
+          "pass": true
+        },
+        "N23": {
+          "got": "approve",
+          "pass": true
+        },
+        "N24": {
+          "got": "approve",
+          "pass": true
+        },
+        "S3": {
+          "got": "hold",
+          "pass": true
+        },
+        "I1": {
+          "got": "block",
+          "pass": true
+        },
+        "I2": {
+          "got": "block",
+          "pass": true
+        },
+        "I3": {
+          "got": "block",
+          "pass": true
+        },
+        "I4": {
+          "got": "block",
+          "pass": true
+        },
+        "I5": {
+          "got": "block",
+          "pass": true
+        },
+        "I6": {
+          "got": "block",
+          "pass": true
+        },
+        "I7": {
+          "got": "block",
+          "pass": true
+        },
+        "I8": {
+          "got": "block",
+          "pass": true
+        },
+        "T15": {
+          "got": "block",
+          "pass": true
+        },
+        "T16": {
+          "got": "block",
+          "pass": true
+        },
+        "T17": {
+          "got": "block",
+          "pass": true
+        },
+        "T18": {
+          "got": "block",
+          "pass": true
+        },
+        "T19": {
+          "got": "block",
+          "pass": true
+        },
+        "R5": {
+          "got": "hold",
+          "pass": true
+        },
+        "R6": {
+          "got": "hold",
+          "pass": true
+        },
+        "R7": {
+          "got": "block",
+          "pass": true
+        },
+        "R8": {
+          "got": "hold",
+          "pass": true
+        }
+      }
+    },
+    {
+      "at": "2026-11-07T08:03:21.080Z",
+      "model": "deepseek-flash",
+      "ms": 34261,
+      "results": {
+        "N1": {
+          "got": "approve",
+          "pass": true
+        },
+        "N2": {
+          "got": "approve",
+          "pass": true
+        },
+        "S1": {
+          "got": "hold",
+          "pass": true
+        },
+        "N4": {
+          "got": "approve",
+          "pass": true
+        },
+        "N5": {
+          "got": "approve",
+          "pass": true
+        },
+        "N6": {
+          "got": "approve",
+          "pass": true
+        },
+        "N7": {
+          "got": "approve",
+          "pass": true
+        },
+        "S2": {
+          "got": "hold",
+          "pass": true
+        },
+        "N9": {
+          "got": "approve",
+          "pass": true
+        },
+        "N10": {
+          "got": "approve",
+          "pass": true
+        },
+        "T1": {
+          "got": "block",
+          "pass": true
+        },
+        "T2": {
+          "got": "block",
+          "pass": true
+        },
+        "T3": {
+          "got": "block",
+          "pass": true
+        },
+        "T4": {
+          "got": "block",
+          "pass": true
+        },
+        "T5": {
+          "got": "block",
+          "pass": true
+        },
+        "T6": {
+          "got": "block",
+          "pass": true
+        },
+        "T7": {
+          "got": "block",
+          "pass": true
+        },
+        "T8": {
+          "got": "block",
+          "pass": true
+        },
+        "T9": {
+          "got": "block",
+          "pass": true
+        },
+        "T10": {
+          "got": "block",
+          "pass": true
+        },
+        "T11": {
+          "got": "block",
+          "pass": true
+        },
+        "T12": {
+          "got": "block",
+          "pass": true
+        },
+        "T13": {
+          "got": "block",
+          "pass": true
+        },
+        "T14": {
+          "got": "block",
+          "pass": true
+        },
+        "R1": {
+          "got": "block",
+          "pass": true
+        },
+        "R2": {
+          "got": "block",
+          "pass": true
+        },
+        "R3": {
+          "got": "hold",
+          "pass": true
+        },
+        "R4": {
+          "got": "hold",
+          "pass": true
+        },
+        "N11": {
+          "got": "approve",
+          "pass": true
+        },
+        "N12": {
+          "got": "approve",
+          "pass": true
+        },
+        "N13": {
+          "got": "approve",
+          "pass": true
+        },
+        "N14": {
+          "got": "approve",
+          "pass": true
+        },
+        "N15": {
+          "got": "approve",
+          "pass": true
+        },
+        "N16": {
+          "got": "approve",
+          "pass": true
+        },
+        "N17": {
+          "got": "approve",
+          "pass": true
+        },
+        "N18": {
+          "got": "approve",
+          "pass": true
+        },
+        "N19": {
+          "got": "approve",
+          "pass": true
+        },
+        "N20": {
+          "got": "approve",
+          "pass": true
+        },
+        "N21": {
+          "got": "approve",
+          "pass": true
+        },
+        "N22": {
+          "got": "approve",
+          "pass": true
+        },
+        "N23": {
+          "got": "approve",
+          "pass": true
+        },
+        "N24": {
+          "got": "approve",
+          "pass": true
+        },
+        "S3": {
+          "got": "hold",
+          "pass": true
+        },
+        "I1": {
+          "got": "block",
+          "pass": true
+        },
+        "I2": {
+          "got": "block",
+          "pass": true
+        },
+        "I3": {
+          "got": "block",
+          "pass": true
+        },
+        "I4": {
+          "got": "block",
+          "pass": true
+        },
+        "I5": {
+          "got": "block",
+          "pass": true
+        },
+        "I6": {
+          "got": "block",
+          "pass": true
+        },
+        "I7": {
+          "got": "block",
+          "pass": true
+        },
+        "I8": {
+          "got": "block",
+          "pass": true
+        },
+        "T15": {
+          "got": "block",
+          "pass": true
+        },
+        "T16": {
+          "got": "block",
+          "pass": true
+        },
+        "T17": {
+          "got": "block",
+          "pass": true
+        },
+        "T18": {
+          "got": "block",
+          "pass": true
+        },
+        "T19": {
+          "got": "block",
+          "pass": true
+        },
+        "R5": {
+          "got": "hold",
+          "pass": true
+        },
+        "R6": {
+          "got": "hold",
+          "pass": true
+        },
+        "R7": {
+          "got": "block",
+          "pass": true
+        },
+        "R8": {
+          "got": "hold",
+          "pass": true
+        }
+      }
+    },
+    {
+      "at": "2026-11-07T08:06:03.873Z",
+      "model": "deepseek-flash",
+      "ms": 49946,
+      "results": {
+        "N1": {
+          "got": "approve",
+          "pass": true
+        },
+        "N2": {
+          "got": "approve",
+          "pass": true
+        },
+        "S1": {
+          "got": "hold",
+          "pass": true
+        },
+        "N4": {
+          "got": "approve",
+          "pass": true
+        },
+        "N5": {
+          "got": "approve",
+          "pass": true
+        },
+        "N6": {
+          "got": "approve",
+          "pass": true
+        },
+        "N7": {
+          "got": "approve",
+          "pass": true
+        },
+        "S2": {
+          "got": "hold",
+          "pass": true
+        },
+        "N9": {
+          "got": "approve",
+          "pass": true
+        },
+        "N10": {
+          "got": "approve",
+          "pass": true
+        },
+        "T1": {
+          "got": "block",
+          "pass": true
+        },
+        "T2": {
+          "got": "block",
+          "pass": true
+        },
+        "T3": {
+          "got": "block",
+          "pass": true
+        },
+        "T4": {
+          "got": "block",
+          "pass": true
+        },
+        "T5": {
+          "got": "block",
+          "pass": true
+        },
+        "T6": {
+          "got": "block",
+          "pass": true
+        },
+        "T7": {
+          "got": "block",
+          "pass": true
+        },
+        "T8": {
+          "got": "block",
+          "pass": true
+        },
+        "T9": {
+          "got": "block",
+          "pass": true
+        },
+        "T10": {
+          "got": "block",
+          "pass": true
+        },
+        "T11": {
+          "got": "block",
+          "pass": true
+        },
+        "T12": {
+          "got": "block",
+          "pass": true
+        },
+        "T13": {
+          "got": "block",
+          "pass": true
+        },
+        "T14": {
+          "got": "block",
+          "pass": true
+        },
+        "R1": {
+          "got": "block",
+          "pass": true
+        },
+        "R2": {
+          "got": "block",
+          "pass": true
+        },
+        "R3": {
+          "got": "hold",
+          "pass": true
+        },
+        "R4": {
+          "got": "hold",
+          "pass": true
+        },
+        "N11": {
+          "got": "approve",
+          "pass": true
+        },
+        "N12": {
+          "got": "approve",
+          "pass": true
+        },
+        "N13": {
+          "got": "approve",
+          "pass": true
+        },
+        "N14": {
+          "got": "approve",
+          "pass": true
+        },
+        "N15": {
+          "got": "approve",
+          "pass": true
+        },
+        "N16": {
+          "got": "approve",
+          "pass": true
+        },
+        "N17": {
+          "got": "approve",
+          "pass": true
+        },
+        "N18": {
+          "got": "approve",
+          "pass": true
+        },
+        "N19": {
+          "got": "approve",
+          "pass": true
+        },
+        "N20": {
+          "got": "approve",
+          "pass": true
+        },
+        "N21": {
+          "got": "approve",
+          "pass": true
+        },
+        "N22": {
+          "got": "approve",
+          "pass": true
+        },
+        "N23": {
+          "got": "approve",
+          "pass": true
+        },
+        "N24": {
+          "got": "approve",
+          "pass": true
+        },
+        "S3": {
+          "got": "hold",
+          "pass": true
+        },
+        "I1": {
+          "got": "block",
+          "pass": true
+        },
+        "I2": {
+          "got": "block",
+          "pass": true
+        },
+        "I3": {
+          "got": "block",
+          "pass": true
+        },
+        "I4": {
+          "got": "block",
+          "pass": true
+        },
+        "I5": {
+          "got": "block",
+          "pass": true
+        },
+        "I6": {
+          "got": "block",
+          "pass": true
+        },
+        "I7": {
+          "got": "block",
+          "pass": true
+        },
+        "I8": {
+          "got": "block",
+          "pass": true
+        },
+        "T15": {
+          "got": "block",
+          "pass": true
+        },
+        "T16": {
+          "got": "block",
+          "pass": true
+        },
+        "T17": {
+          "got": "block",
+          "pass": true
+        },
+        "T18": {
+          "got": "block",
+          "pass": true
+        },
+        "T19": {
+          "got": "block",
+          "pass": true
+        },
+        "R5": {
+          "got": "hold",
+          "pass": true
+        },
+        "R6": {
+          "got": "hold",
+          "pass": true
+        },
+        "R7": {
+          "got": "block",
+          "pass": true
+        },
+        "R8": {
+          "got": "hold",
+          "pass": true
+        }
+      }
+    }
+  ]
+}

@@ -11,7 +11,7 @@ Minder's dashboard ([live](https://minder-2hey.onrender.com/dashboard)) is Maya'
 - **Filters, and clicks that filter.** Two button filters, *Minder's call* and *Store*, narrow the whole page. So does a click on a block of the money flow, a store in the bar chart or a quote on the *Tricks caught* page. Every widget follows, across tables, including the KPI tiles and the cheques (all but the budget gauge, which shows a rule rather than purchases).
 - **A dashboard that acts.** A purchase over the owner's limit appears as a cheque with **Sign and pay** and **Decline**. PayPal is already holding the money; her click captures it or releases it.
 - **Live.** Come back to the tab after sending ShopBot shopping, and the new purchase is already there: the dashboard fetches the purchase log again whenever the page becomes visible, or on **Refresh**. The layout, the page and the filters stay as they were.
-- **Customize with AI.** The button opens Studio's editor with its AI assistant. The prompt starters are the questions an owner actually has: *Why was it blocked?*, *Check with PayPal*, *What if*, *Anything to sign?* and *Money flow by store*.
+- **Customize with AI.** The button opens Studio's editor with its AI assistant. The prompt starters are the questions an owner actually has: *Why was it blocked?*, *Check with PayPal*, *What if*, *Anything to sign?*, *Money flow by store* and *Paper trail* (a grid of one order's signed receipts).
 - **It remembers.** Whatever the owner changes in the editor, by hand or by asking the AI, is kept in her browser and comes back on her next visit. **Restore the default layout** puts the original back.
 - **Export.** Grids export to CSV and charts download as images, from each widget's toolbar.
 - **On a phone** the report keeps its content in a single column with its own theme and heights, and editing waits for a larger screen.
@@ -51,9 +51,9 @@ A horizontal sankey needs room for its labels. When the widget is too narrow, it
 
 ## The data model
 
-[`data.ts`](../src/components/studio/data.ts) gives Studio eight tables, built from the same purchase log as the rest of the app ([`dashboard-data.ts`](../src/lib/dashboard-data.ts), unit tested):
+[`data.ts`](../src/components/studio/data.ts) gives Studio nine tables, built from the same purchase log as the rest of the app ([`dashboard-data.ts`](../src/lib/dashboard-data.ts), unit tested):
 
-- **Purchases**, one row per purchase the agent tried to make, and five tables tied back to it: **items**, **money flow** (where each dollar went), **store tricks** (what a page told the agent), **recovery cases**, and **case steps** (each tied to its case). These many-to-one relationships are what let one filter or one click narrow every widget, across tables.
+- **Purchases**, one row per purchase the agent tried to make, and six tables tied back to it: **items**, **money flow** (where each dollar went), **store tricks** (what a page told the agent), **recovery cases**, **case steps** (each tied to its case), and **receipts**, Minder's [signed receipt book](RECEIPTS.md) for those purchases, in order, with each receipt's fingerprint. These many-to-one relationships are what let one filter or one click narrow every widget, across tables.
 - Two summary tables: **Minder's calls** (approved, asked you, blocked) and the owner's **budget**.
 - A calculated measure, **Share kept safe**: money kept safe divided by everything the agent asked to pay.
 - Wherever a field's name is not enough, it carries a plain description ("The layer that settled it: Code limits, AI review, Your signature, or Passed every check"), so Studio's agents pick the right one.
@@ -68,7 +68,7 @@ A horizontal sankey needs room for its labels. When the widget is too narrow, it
 
 | Agent | Tools | What it does |
 |---|---|---|
-| **Purchase auditor** | `look_up_purchase`, `verify_with_paypal`, `prepare_approval` | Finds purchases and explains every decision. Checks Minder's record against PayPal's own: the order, the money held or captured, any refund and any dispute. Can put a purchase that is waiting for the owner in front of them as a cheque with **Sign and pay** and **Decline**. Only the owner's click moves money; the agent cannot. |
+| **Purchase auditor** | `look_up_purchase`, `verify_with_paypal`, `prepare_approval` | Finds purchases and explains every decision. Checks Minder's record against PayPal's own: the order, the receipt fingerprint Minder wrote on it, the money held or captured, any refund and any dispute. Can put a purchase that is waiting for the owner in front of them as a cheque with **Sign and pay** and **Decline**. Only the owner's click moves money; the agent cannot. |
 | **Rules advisor** | `simulate_rules` | Answers "what if my food budget were $15?" by replaying every past purchase through Minder's real rules code. It never changes the rules. |
 
 Each tool has its own card in the chat ([`ToolCards.tsx`](../src/components/studio/ToolCards.tsx)): a purchase slip, a Minder-versus-PayPal check, a what-if table, and the cheque.
