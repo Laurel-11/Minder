@@ -16,8 +16,8 @@ export async function POST(request: Request) {
   const note = (body.note ?? "").trim().slice(0, 400);
   if (!TRICK_TARGETS.some((t) => t.productId === body.productId)) return Response.json({ error: "Pick one of the three products." }, { status: 400 });
   if (note.length < 10) return Response.json({ error: "Write a note of at least a few words." }, { status: 400 });
-  const mine = overLimit(`try:${clientIp(request)}`, 3, 60_000);
-  if (mine.limited) return Response.json({ error: `Three tries a minute. Try again in ${mine.retryInSeconds} seconds.` }, { status: 429 });
+  const mine = overLimit(`try:${clientIp(request)}`, 5, 60_000);
+  if (mine.limited) return Response.json({ error: `Five tries a minute. Try again in ${mine.retryInSeconds} seconds.` }, { status: 429 });
   const all = overLimit("try:all", 30, 10 * 60_000);
   if (all.limited) return Response.json({ error: `Lots of people are trying right now. Try again in ${all.retryInSeconds} seconds.` }, { status: 429 });
   try {
