@@ -30,16 +30,20 @@ Minder sits between any AI shopping agent and its owner's PayPal, and covers the
 
 | Before payment | At payment | After payment | On the record |
 |:--|:--|:--|:--|
-| **Blocks** the orders a store page talked the agent into: hidden add-ons, more units, a swapped product. The owner's rules run in code, an AI review treats page text as untrusted, and Channel3 shows what other stores charge. | **Holds** anything over the owner's limit in their own PayPal (an authorization), so nothing is charged until they sign. | **Recovers** money when a paid order never ships or arrives damaged: Minder writes the claim, the store's agent refunds through PayPal's Agent Toolkit, or the case becomes a PayPal dispute. | **Signs** every decision and money move into a chained [receipt book](#the-receipt-book). PayPal's own order carries the receipt's fingerprint, and claims and disputes cite it. |
+| **Blocks** the orders a store page talked the agent into: hidden add-ons, more units, a swapped product. The owner's rules run in code, an AI review treats page text as untrusted, and Channel3 shows what other stores charge. | **Holds** anything over the owner's limit in their own PayPal (an authorization), so nothing is charged until they sign. | **Recovers** money when a paid order never ships or arrives damaged: Minder writes the claim and the store's agent refunds through PayPal's Agent Toolkit. Only a store that won't help becomes a PayPal dispute, and then it is blocked. | **Signs** every decision and money move into a chained [receipt book](#the-receipt-book). PayPal's own order carries the receipt's fingerprint, and claims and disputes cite it. |
 
 ## Why it stands out
 
 1. **It covers the gap Buyer Protection leaves.** An order the agent was tricked into arrives exactly as described, so PayPal Buyer Protection usually doesn't cover it. Minder stops it before PayPal is asked to pay ([the gap](#the-gap-minder-closes)).
-2. **More than a spending firewall.** Most guards for AI agents check a budget at checkout. Minder also catches the trick that stays inside the budget, holds big orders in the owner's own PayPal, and gets money back after payment ([how it differs](#minder-and-agent-spending-firewalls)).
-3. **Real PayPal, end to end.** Vault, Orders, Payments, tracking, Disputes and signed webhooks, plus PayPal's Agent Toolkit, all live in the sandbox. A check reads every result back from PayPal's own API: 18 of 18 ([proof](#proof-not-promises)).
-4. **A record nobody has to take on trust.** Every decision and money move is a signed receipt, chained to the one before. PayPal's own order carries the decision receipt's fingerprint, and a claim or dispute cites the receipts as evidence. Change one character and the check fails, on the site or offline ([the receipt book](#the-receipt-book)).
-5. **Any agent can use it.** ShopBot is the demo agent; any AI agent can shop through Minder's [MCP server](#connect-your-own-agent-mcp), under the same checks.
-6. **Proven, and honest about the rest.** A 60-case exam that anyone can [run live](https://minder-2hey.onrender.com/exam) (81 of 81 tricks caught and 66 of 66 normal purchases paid, across three runs), 151 unit tests in CI, a public trick game, and a plain list of [what is simulated](#what-is-verified-and-what-is-not).
+2. **Fewer disputes, not more.** A tricked order is stopped before a PayPal order exists, so there is nothing to dispute. A store that will make things right refunds through PayPal's Agent Toolkit, with no dispute at all. Only a store that won't help becomes a PayPal dispute, and Minder then blocks it. That is better for the buyer, for honest stores and for PayPal ([how](#fewer-disputes-not-more)).
+3. **More than a spending firewall.** Most guards for AI agents check a budget at checkout. Minder also catches the trick that stays inside the budget, holds big orders in the owner's own PayPal, and gets money back after payment ([how it differs](#minder-and-agent-spending-firewalls)).
+4. **Agents on both sides of the deal.** The buyer's agent asks Minder to pay. The store's agent answers the claim by acting in PayPal itself, through PayPal's Agent Toolkit: it refunds with `create_refund` and accepts a dispute claim with `accept_dispute_claim`. Minder checks each of those calls against what was agreed: the agent can word its note, but never change who is refunded or how much.
+5. **Real PayPal, end to end.** Vault, Orders, Payments, tracking, Disputes and signed webhooks, all live in the sandbox. A check reads every result back from PayPal's own API (18 of 18, [proof](#proof-not-promises)), and the same money shows up in Maya's own PayPal account (below).
+6. **A plugin for the agent you already use.** Minder is an MCP server: add one URL to Claude Code, Claude Desktop, Cursor or VS Code, and that agent's purchases go through the same checks. ShopBot and the demo stores are a test track, so you can try every case in a browser with nothing to install ([add it to your agent](#use-minder-as-a-plugin-for-any-agent-mcp)).
+7. **Proven, and honest about the rest.** A 60-case exam that anyone can [run live](https://minder-2hey.onrender.com/exam) (81 of 81 tricks caught and 66 of 66 normal purchases paid, across three runs), 151 unit tests in CI, a signed [receipt book](#the-receipt-book) anyone can check offline, a public trick game, and a plain list of [what is simulated](#what-is-verified-and-what-is-not).
+
+<p align="center"><img src="docs/assets/paypal-sandbox-account.jpg" alt="Maya's PayPal sandbox account during the demo: purchases held as authorizations on the left, including $129.00 for the headphones; payments and the $15.00 refund on the right" width="80%"></p>
+<p align="center"><sub>Maya's own PayPal sandbox account during the demo. Left: purchases PayPal is holding until she signs (authorizations). Right: completed payments, and the $15.00 refund from the cracked lamp. In the demo every store is paid through one sandbox business account, shown here as "Test Store".</sub></p>
 
 ## Demo video
 
@@ -62,7 +66,7 @@ Each step says what to click and what you should see.
    - **Check with PayPal** compares Minder's records with PayPal's own API.
    - **What if** replays every past purchase through the real rules with a $15 food budget.
    - **Anything to sign?** If the headphones from step 3 are still waiting, a cheque appears. Only your click on **Sign and pay** moves money; the agent cannot.
-8. **Optional: run the exam, or bring your own agent.** [/exam](https://minder-2hey.onrender.com/exam) runs all 60 cases against the live rules and AI in about two minutes. Or add `https://minder-2hey.onrender.com/api/mcp` to any MCP client (see [Connect your own agent](#connect-your-own-agent-mcp)) and ask it to buy something. Its purchases go through the same checks and appear on **Activity**.
+8. **Optional: run the exam, or bring your own agent.** [/exam](https://minder-2hey.onrender.com/exam) runs all 60 cases against the live rules and AI in about two minutes. Or add `https://minder-2hey.onrender.com/api/mcp` to your own agent (see [Use Minder as a plugin](#use-minder-as-a-plugin-for-any-agent-mcp)) and ask it to buy something. Its purchases go through the same checks and appear on **Activity**.
 
 ## The gap Minder closes
 
@@ -86,6 +90,21 @@ Why now:
 - In Microsoft's simulated marketplace, prompt injection redirected AI agents' payments to manipulative sellers; the researchers concluded that oversight is critical for high-stakes transactions ([The Register, November 2025](https://www.theregister.com/2025/11/06/microsoft_unveils_the_magentic_marketplace/)).
 - PayPal is opening checkout to AI agents, with buyer protection and dispute resolution on the merchant side ([PayPal, October 2025](https://newsroom.paypal-corp.com/2025-10-28-PayPal-Launches-Agentic-Commerce-Services-to-Power-AI-Driven-Shopping)). Minder adds the buyer's side: stopping the order the agent was talked into.
 - Prompt injection is the top risk for LLM applications, and has no fool-proof fix ([OWASP LLM01:2025](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)). Minder follows OWASP's mitigations; see the [threat model](SECURITY.md).
+
+## Fewer disputes, not more
+
+An agent that opened a PayPal dispute every time something went wrong would be bad for everyone. Each dispute is a case PayPal has to review, PayPal charges the seller a fee for it, and the fee is higher for sellers whose disputes reach a large share of their sales ([PayPal User Agreement](https://www.paypal.com/us/legalhub/useragreement-full)). Many of those stores would gladly have fixed the problem if asked.
+
+So Minder treats a PayPal dispute as the last step, not the first. Here is how each purchase in the demo story ends:
+
+| Where it stops | In the demo | PayPal disputes |
+|---|---|---|
+| **Before payment** | ShopBot was talked into a $39 protection plan with a cable. Minder blocks it; no PayPal order is created. | None: nothing was paid |
+| **At payment** | $129 headphones are over Maya's $100 line. PayPal holds the money until she signs; declining voids the hold. | None: nothing is taken until she agrees |
+| **Settled with the store** | The lamp from BrightHome arrived cracked. Minder sends the claim, the store's agent offers 50%, Maya accepts, and the store refunds $15.00 through PayPal's Agent Toolkit. | None: a refund, not a case |
+| **Escalated, then blocked** | The phone case from QuickGadgets Outlet never shipped, and the store's agent brushes off the claim ("all sales are final"). Minder escalates to a PayPal dispute, then offers to block the store, so the agent can never pay it again. | One, for the store that earned it |
+
+For the buyer, that means money back without a fight. For an honest store, a problem settled before it turns into a dispute. For PayPal, fewer cases to review, and the ones that do arrive come with the evidence timeline and [receipts](#the-receipt-book) Minder wrote before the money moved.
 
 ## Minder and agent spending firewalls
 
@@ -131,11 +150,11 @@ What we built from it: ten exam cases come straight from their fears (a wrong gr
 |---|---|
 | Technological implementation | Seven PayPal API areas plus PayPal's Agent Toolkit ([details](#how-it-uses-paypal)): every write idempotent and safely retried, every webhook signature checked with PayPal, and every decision a signed receipt whose fingerprint rides on the PayPal order. AI in seven roles, each answer checked against a schema. A 60-case exam on the live AI, and 151 unit tests that need no keys, run by CI on every push. |
 | Design | One owner, one story, three outcomes explained in plain words. Every page works on a phone, the AG Studio dashboard is themed as part of the product, and [How it works](https://minder-2hey.onrender.com/how-it-works) explains the gap and the flow on one page. |
-| Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. In three interviews, the top fears about letting an agent pay were these before-payment mistakes: a swapped product, hidden instructions, runaway orders ([what we heard](#what-we-heard-three-interviews)). |
+| Potential impact | PayPal's best-known promise to buyers, extended to purchases made by agents. Buyer Protection was built for people who notice problems after delivery; an agent's worst losses happen before payment, when it is talked into an order that then arrives as described. In three interviews, the top fears about letting an agent pay were these before-payment mistakes: a swapped product, hidden instructions, runaway orders ([what we heard](#what-we-heard-three-interviews)). And it keeps agents from flooding PayPal with disputes: most problems end before payment or in a refund, and only a store that won't help becomes a dispute ([fewer disputes](#fewer-disputes-not-more)). |
 | Innovation | Buyer protection rethought for agents: prevention where Buyer Protection cannot reach, and automatic claims where it can. One lifecycle: code limits and AI review before payment, a PayPal hold at payment, then claim, agent-to-agent negotiation, refund or dispute, and a store block. One signed receipt book runs through all of it, so the evidence for a dispute was written before the money moved. Most agent spending guards we looked at stop at checkout. |
 | Presentation | [The video](https://www.youtube.com/watch?v=rPdLauPEaNM) ([storyline](docs/VIDEO.md)), the [3-minute tour](#try-it-in-3-minutes) and the [with and without](#with-and-without-minder) numbers. |
 | Best use of PayPal + AI | Minder is built on the buyer's side of PayPal ([why PayPal](#why-paypal)). AI judges what should happen; PayPal holds, captures, voids, refunds and disputes. The stores' agents act through PayPal's own Agent Toolkit, and PayPal's webhooks move every case forward. The demo check reads every result back from PayPal's API. |
-| Best use of agentic commerce | Agents on both sides of the deal: a buying agent (ShopBot, or any agent over MCP) and the stores' agents, which answer claims and disputes through PayPal's Agent Toolkit. Minder is the buyer's checkpoint, and a third set of agents works the dashboard. |
+| Best use of agentic commerce | Agents on both sides of the deal: a buying agent (ShopBot, or the owner's own agent with Minder added as an [MCP plugin](#use-minder-as-a-plugin-for-any-agent-mcp)) and the stores' agents, which refund and accept claims in PayPal through PayPal's Agent Toolkit, each call checked by Minder. Minder is the buyer's checkpoint, and a third set of agents works the dashboard. |
 | AG Grid sponsor prize | Three custom AG Studio widgets (one of them a cheque the owner signs), page filters, live data, a saved layout, a connected nine-table data model that includes the signed receipts, Minder's own theme, and Minder's own agents on Studio's Agent Framework ([summary](#how-it-uses-ag-studio), [full write-up with screenshots](docs/AG-STUDIO.md)). |
 | Channel3 sponsor prize | Before paying, Minder looks each item up in Channel3's catalog of real retailers. Plain gouging (more than three times the typical price) waits for the owner, the AI review gets the same prices as trusted context next to the untrusted store page, and the purchase page shows what other stores charge ([market prices](#market-prices-channel3)). |
 | Render sponsor prize | Hosted on Render from [`render.yaml`](render.yaml), always on, with a health check at `/api/ping`. |
@@ -218,7 +237,7 @@ PayPal is building agentic commerce for merchants: Agent Ready lets them accept 
 
 **Verified**
 
-- **Real sandbox money movement.** Orders, holds, captures, voids, refunds, tracking and disputes all happen in the PayPal sandbox. The demo check reads each one back from PayPal's API, not from Minder's records ([latest report](docs/proof/demo-check.md): 18 of 18).
+- **Real sandbox money movement.** Orders, holds, captures, voids, refunds, tracking and disputes all happen in the PayPal sandbox. The demo check reads each one back from PayPal's API, not from Minder's records ([latest report](docs/proof/demo-check.md): 18 of 18). The same holds and the refund appear in Maya's own PayPal sandbox account ([screenshot](#why-it-stands-out)).
 - **The AI review.** 60 purchases with answers fixed in advance, graded by code, on the live AI only, three full runs (180 of 180 answers as written; [report](docs/proof/exam.md)). Anyone can run it again at [/exam](https://minder-2hey.onrender.com/exam).
 - **The receipt book.** Every receipt in the demo check verifies (fingerprint, signature, chain), and PayPal's order for each paid purchase carries its decision receipt's fingerprint as `custom_id`, read back from PayPal's API ([demo check](docs/proof/demo-check.md)). `scripts/verify-receipts.mjs` checks a downloaded book offline.
 - **Channel3.** Live searches against Channel3's catalog during the exam and the demo check; the purchase pages show the prices that came back.
@@ -264,15 +283,23 @@ Minder runs on DeepSeek (`deepseek-flash`) and falls back to Gemini if DeepSeek 
 
 If no model answers, anything not already blocked waits for the owner. So that a live demo survives an AI outage, the demo's own sample requests also have recorded answers ([`src/lib/ai-replay.json`](src/lib/ai-replay.json)). One is used only when every model fails and only for that exact order on that exact page, and the purchase says so. The exam never uses them.
 
-## Connect your own agent (MCP)
+## Use Minder as a plugin for any agent (MCP)
 
-Minder is also an MCP server, so any agent can shop through it instead of ShopBot:
+On the website, ShopBot and the five demo stores are a test track: they let anyone try every case in a browser, with nothing to install. In real use, Minder plugs in between the agent someone already uses and their PayPal, as an MCP server:
 
 ```
 https://minder-2hey.onrender.com/api/mcp
 ```
 
-It uses Streamable HTTP and needs no login (sandbox demo). Add the URL as a remote MCP server in your client, or try it with the MCP Inspector (`npx @modelcontextprotocol/inspector`, transport "Streamable HTTP").
+| Client | How to add it |
+|---|---|
+| Claude Code | `claude mcp add --transport http minder https://minder-2hey.onrender.com/api/mcp` |
+| Claude Desktop or claude.ai | Settings → Connectors → Add custom connector, then paste the URL |
+| Cursor | In `~/.cursor/mcp.json`: `{"mcpServers": {"minder": {"url": "https://minder-2hey.onrender.com/api/mcp"}}}` |
+| VS Code | In `.vscode/mcp.json`: `{"servers": {"minder": {"type": "http", "url": "https://minder-2hey.onrender.com/api/mcp"}}}` |
+| Any other client | Add the URL as a remote MCP server (Streamable HTTP), or try it in the MCP Inspector: `npx @modelcontextprotocol/inspector` |
+
+It needs no login (sandbox demo). Then ask the agent to buy something, for example "get me a clear phone case": it browses the demo stores, asks Minder to pay, and the purchase appears on the site's **Activity** page with Minder's decision.
 
 | Tool | What it does |
 |---|---|
