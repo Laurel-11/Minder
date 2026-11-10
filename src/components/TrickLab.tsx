@@ -6,6 +6,7 @@ import { usd } from "@/lib/money";
 import type { TrickBoard, TrickResult } from "@/lib/trick";
 
 export type TrickTarget = { productId: string; request: string; example: string; product: string; price: number; store: string; others: string[] };
+export type TrickPreset = { id: string; label: string; hint: string; productId: string; note: string };
 
 const VERDICT: Record<TrickResult["outcome"], (r: TrickResult) => { title: string; tone: string }> = {
   no_order: (r) => ({ title: r.run.agentMessage || "ShopBot did not place an order.", tone: "text-muted" }),
@@ -15,7 +16,7 @@ const VERDICT: Record<TrickResult["outcome"], (r: TrickResult) => { title: strin
   slipped: (r) => ({ title: `You beat Minder: ShopBot fell for it and PayPal paid ${usd(r.run.minder?.total ?? 0)} (sandbox money).`, tone: "text-block" }),
 };
 
-export function TrickLab({ targets, initialBoard }: { targets: TrickTarget[]; initialBoard: TrickBoard }) {
+export function TrickLab({ targets, presets = [], initialBoard }: { targets: TrickTarget[]; presets?: TrickPreset[]; initialBoard: TrickBoard }) {
   const [productId, setProductId] = useState(targets[0].productId);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -23,6 +24,13 @@ export function TrickLab({ targets, initialBoard }: { targets: TrickTarget[]; in
   const [result, setResult] = useState<TrickResult | null>(null);
   const [board, setBoard] = useState(initialBoard);
   const target = targets.find((t) => t.productId === productId)!;
+
+  function pickPreset(p: TrickPreset) {
+    setProductId(p.productId);
+    setNote(p.note);
+    setResult(null);
+    setError(null);
+  }
 
   async function send() {
     setBusy(true);
@@ -71,6 +79,30 @@ export function TrickLab({ targets, initialBoard }: { targets: TrickTarget[]; in
         </div>
       </fieldset>
 
+      {presets.length > 0 && (
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="font-medium">Start from a known trick, or write your own below</p>
+          <div className="flex flex-wrap gap-2">
+            {presets.map((p) => {
+              const on = p.productId === productId && p.note === note;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => pickPreset(p)}
+                  disabled={busy}
+                  aria-pressed={on}
+                  className={`rounded-full border px-3 py-1 text-left disabled:opacity-50 ${on ? "border-ink bg-canvas" : "border-line hover:border-ink"}`}
+                >
+                  {p.label}
+                  <span className="text-muted"> · {p.hint}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <label className="flex flex-col gap-2 text-sm">
         <span className="font-medium">Your note on the {target.product} page</span>
         <textarea
@@ -84,9 +116,13 @@ export function TrickLab({ targets, initialBoard }: { targets: TrickTarget[]; in
         />
         <span className="text-xs text-muted">{target.store} also sells: {target.others.join("; ")}.</span>
         <span className="flex justify-between text-xs text-muted">
-          <button type="button" onClick={() => setNote(target.example)} disabled={busy} className="underline underline-offset-2">
-            Use the example
-          </button>
+          {presets.length === 0 ? (
+            <button type="button" onClick={() => setNote(target.example)} disabled={busy} className="underline underline-offset-2">
+              Use the example
+            </button>
+          ) : (
+            <span />
+          )}
           <span className="tabular-nums">{note.length} / 400</span>
         </span>
       </label>
