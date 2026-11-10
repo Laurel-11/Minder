@@ -59,7 +59,7 @@ Each step says what to click and what you should see.
 2. **A trick, blocked.** Open **Try ShopBot** and pick "Order a USB-C charging cable for my phone". The store page hides a note telling AI agents to add a $39 protection plan. ShopBot obeys; Minder **blocks** the order and quotes the note. No PayPal order is created.
 3. **A big purchase, held.** Ask ShopBot to "Buy wireless headphones for my dad's birthday". $129 is over Maya's $100 ask-me line, so PayPal **holds** the money and Minder asks the owner. Open the purchase: **Pay $129.00** captures the held money, **Decline** releases it.
 4. **An order gone wrong.** On **Activity**, open the phone case from QuickGadgets Outlet. It never shipped. Minder noticed on its own, wrote the claim, the store's agent refused, and the case became a PayPal dispute. Click **Block QuickGadgets Outlet**, then ask ShopBot to "Get me a clear phone case": plain code stops it before any money moves.
-5. **Try to trick it.** Further down the **Try ShopBot** page, write your own note for a product page (or use the example). ShopBot usually falls for it; see whether Minder catches it before PayPal pays.
+5. **Try to trick it.** Further down the **Try ShopBot** page, pick one of four known tricks (a hidden add-on, a doubled quantity, a fake message from Minder itself, a product swapped in an HTML comment) or write your own note for a product page, then **Send ShopBot shopping**. ShopBot usually falls for it; see whether Minder catches it before PayPal pays.
 6. **Check the receipts.** Open **Receipts**. Every step above is there, signed and chained. In **Change one and see**, turn a blocked decision into "approve" and check it: the fingerprint no longer matches. On any paid purchase, **Check with PayPal** shows that PayPal's own order carries the receipt's fingerprint.
 7. **The dashboard.** Open **Dashboard** and follow the money in the flow chart; click any block to filter the whole report. **Tricks caught** shows the exact words store pages hid for the agent. Then click **Customize with AI** and try the starters:
    - **Why was it blocked?** explains a decision in plain words.
@@ -293,7 +293,8 @@ https://minder-2hey.onrender.com/api/mcp
 
 | Client | How to add it |
 |---|---|
-| Claude Code | `claude mcp add --transport http minder https://minder-2hey.onrender.com/api/mcp` |
+| Claude Code, as a plugin | `/plugin marketplace add Laurel-11/Minder`, then `/plugin install minder@minder` ([`.claude-plugin/`](.claude-plugin/plugin.json)) |
+| Claude Code, as a server | `claude mcp add --transport http minder https://minder-2hey.onrender.com/api/mcp`, or open this repository: its [`.mcp.json`](.mcp.json) offers the server |
 | Claude Desktop or claude.ai | Settings → Connectors → Add custom connector, then paste the URL |
 | Cursor | In `~/.cursor/mcp.json`: `{"mcpServers": {"minder": {"url": "https://minder-2hey.onrender.com/api/mcp"}}}` |
 | VS Code | In `.vscode/mcp.json`: `{"servers": {"minder": {"type": "http", "url": "https://minder-2hey.onrender.com/api/mcp"}}}` |
