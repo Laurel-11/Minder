@@ -5,7 +5,8 @@
 <p align="center">
   <b>Your AI agent shops for you, and some store pages are written to trick it.</b><br>
   Minder checks every purchase before PayPal moves a cent, holds big ones for your signature,
-  and gets your money back through PayPal when a paid order goes wrong.
+  and gets your money back through PayPal when a paid order goes wrong,
+  keeping PayPal disputes for the stores that earn them.
 </p>
 
 <p align="center">
@@ -157,7 +158,7 @@ What we built from it: ten exam cases come straight from their fears (a wrong gr
 | Best use of agentic commerce | Agents on both sides of the deal: a buying agent (ShopBot, or the owner's own agent with Minder added as an [MCP plugin](#use-minder-as-a-plugin-for-any-agent-mcp)) and the stores' agents, which refund and accept claims in PayPal through PayPal's Agent Toolkit, each call checked by Minder. Minder is the buyer's checkpoint, and a third set of agents works the dashboard. |
 | AG Grid sponsor prize | Three custom AG Studio widgets (one of them a cheque the owner signs), page filters, live data, a saved layout, a connected nine-table data model that includes the signed receipts, Minder's own theme, and Minder's own agents on Studio's Agent Framework ([summary](#how-it-uses-ag-studio), [full write-up with screenshots](docs/AG-STUDIO.md)). |
 | Channel3 sponsor prize | Before paying, Minder looks each item up in Channel3's catalog of real retailers. Plain gouging (more than three times the typical price) waits for the owner, the AI review gets the same prices as trusted context next to the untrusted store page, and the purchase page shows what other stores charge ([market prices](#market-prices-channel3)). |
-| Render sponsor prize | Hosted on Render from [`render.yaml`](render.yaml), always on, with a health check at `/api/ping`. |
+| Render sponsor prize | Hosted on Render from [`render.yaml`](render.yaml), with a health check at `/api/ping`. |
 
 ## How it works
 
@@ -293,7 +294,7 @@ https://minder-2hey.onrender.com/api/mcp
 
 | Client | How to add it |
 |---|---|
-| Claude Code, as a plugin | `/plugin marketplace add Laurel-11/Minder`, then `/plugin install minder@minder` ([`.claude-plugin/`](.claude-plugin/plugin.json)) |
+| Claude Code, as a plugin | `/plugin marketplace add Laurel-11/Minder`, then `/plugin install minder@minder` ([`plugin/`](plugin/.claude-plugin/plugin.json)) |
 | Claude Code, as a server | `claude mcp add --transport http minder https://minder-2hey.onrender.com/api/mcp`, or open this repository: its [`.mcp.json`](.mcp.json) offers the server |
 | Claude Desktop or claude.ai | Settings → Connectors → Add custom connector, then paste the URL |
 | Cursor | In `~/.cursor/mcp.json`: `{"mcpServers": {"minder": {"url": "https://minder-2hey.onrender.com/api/mcp"}}}` |

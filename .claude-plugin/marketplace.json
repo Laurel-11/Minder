@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "minder",
-      "source": "./",
+      "source": "./plugin",
       "description": "Adds Minder's MCP server: your agent shops the demo stores, and Minder checks each purchase before PayPal pays."
     }
   ]
