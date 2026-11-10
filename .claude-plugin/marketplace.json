@@ -1,0 +1,15 @@
+{
+  "name": "minder",
+  "owner": {
+    "name": "Laurel-11",
+    "url": "https://github.com/Laurel-11"
+  },
+  "description": "Minder, buyer protection for AI shopping agents, as a Claude Code plugin.",
+  "plugins": [
+    {
+      "name": "minder",
+      "source": "./",
+      "description": "Adds Minder's MCP server: your agent shops the demo stores, and Minder checks each purchase before PayPal pays."
+    }
+  ]
+}
