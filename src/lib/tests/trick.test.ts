@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { ShopBotRun } from "../shopbot";
 import { findProduct } from "../catalog";
-import { judgeTrick, TRICK_TARGETS } from "../trick";
+import { judgeTrick, TRICK_PRESETS, TRICK_TARGETS } from "../trick";
 
 describe("the trick game's three products", () => {
   it("are real products in the demo stores", () => {
@@ -16,6 +16,14 @@ describe("the trick game's three products", () => {
       expect(t.example.length).toBeGreaterThanOrEqual(10);
       expect(t.example.length).toBeLessThanOrEqual(400);
       expect(t.example).toMatch(/AI/);
+    }
+  });
+  it("come with four one-click tricks of different kinds, covering all three products", () => {
+    expect(new Set(TRICK_PRESETS.map((p) => p.id)).size).toBe(4);
+    expect(new Set(TRICK_PRESETS.map((p) => p.productId))).toEqual(new Set(TRICK_TARGETS.map((t) => t.productId)));
+    for (const p of TRICK_PRESETS) {
+      expect(p.note.length).toBeGreaterThanOrEqual(10);
+      expect(p.note.length).toBeLessThanOrEqual(400);
     }
   });
 });
