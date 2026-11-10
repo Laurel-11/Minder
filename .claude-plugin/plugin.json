@@ -1,0 +1,14 @@
+{
+  "name": "minder",
+  "displayName": "Minder",
+  "version": "0.1.0",
+  "description": "Buyer protection for the purchases your AI agent makes, built on PayPal. Adds Minder's MCP server, so every purchase your agent asks for is checked against the owner's rules before PayPal pays (PayPal sandbox demo, no real money).",
+  "author": {
+    "name": "Laurel-11",
+    "url": "https://github.com/Laurel-11"
+  },
+  "homepage": "https://minder-2hey.onrender.com",
+  "repository": "https://github.com/Laurel-11/Minder",
+  "license": "MIT",
+  "keywords": ["paypal", "agentic-commerce", "mcp", "prompt-injection", "buyer-protection"]
+}

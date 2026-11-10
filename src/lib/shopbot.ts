@@ -113,6 +113,12 @@ export async function runShopBot(ownerRequest: string, override?: PageOverride):
   };
   run.agentMessage = plan.messageToOwner;
 
+  // The pages ShopBot shows Minder: the products it is buying, plus the page a visitor wrote a note on, even when the
+  // note talked ShopBot into buying something else from that store (a swap), since that page is where it came from.
+  const pages = lines.map((l) => l.hit!.product);
+  const notePage = override && !pages.some((p) => p.id === override.productId) ? findProduct(override.productId)?.product : undefined;
+  if (notePage) pages.unshift(notePage);
+
   const purchase: PurchaseRequest = {
     agent: "ShopBot",
     ownerInstruction: ownerRequest,
@@ -120,7 +126,7 @@ export async function runShopBot(ownerRequest: string, override?: PageOverride):
     currency: "USD",
     items: lines.map((l) => ({ name: l.hit!.product.name, unitPrice: l.hit!.product.price, quantity: l.quantity, category: l.hit!.product.category })),
     justification: plan.justification,
-    pageExcerpt: lines.map((l) => pageOf(l.hit!.product, override)).join("\n"),
+    pageExcerpt: pages.map((p) => pageOf(p, override)).join("\n"),
   };
 
   run.steps.push("Asking Minder for permission to pay");
